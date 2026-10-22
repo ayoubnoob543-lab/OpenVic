@@ -26,6 +26,7 @@ var _id_to_tag: Array[StringName] = []
 var _requested_node_to_delete: Control
 var _start_date_index: int = -1
 var _game_setup_date_index: int = -1
+var _selected_country_identifier: String = ""
 
 
 func _ready() -> void:
@@ -108,6 +109,7 @@ func _on_back_button_pressed() -> void:
 
 	_game_setup_date_index = -1
 	_start_date_index = -1
+	_selected_country_identifier = ""
 	start_button.disabled = true
 	if selected_country_name_label != null:
 		selected_country_name_label.text = tr("Select a country on the map")
@@ -121,12 +123,13 @@ func _on_back_button_pressed() -> void:
 func _on_start_button_pressed() -> void:
 	print("Starting new game.")
 	if SaveManager.current_session_tag == "":
-		# TODO: Get country tag as well
 		var datetime := Time.get_datetime_dict_from_system()
-		SaveManager.current_session_tag = "%s/%s/%s-%s:%s:%s" % [
-			datetime["day"],
-			datetime["month"],
+		var country_tag: String = _selected_country_identifier if not _selected_country_identifier.is_empty() else "unknown-country"
+		SaveManager.current_session_tag = "%s-%s-%s-%s-%s-%s-%s" % [
+			country_tag,
 			datetime["year"],
+			datetime["month"],
+			datetime["day"],
 			datetime["hour"],
 			datetime["minute"],
 			datetime["second"],
@@ -165,6 +168,11 @@ func _on_session_tag_dialog_confirmed() -> void:
 	if _start_date_index < 0:
 		push_error("Cannot setup game, no start date selected!")
 		return
+	if SaveManager.current_save == null and _selected_country_identifier.is_empty():
+		push_warning("Select a country on the map before starting a new game.")
+		if selected_country_name_label != null:
+			selected_country_name_label.text = tr("Select a country on the map")
+		return
 
 	# The game instance may already have been created when the player selected a country.
 	if GameSingleton.is_game_instance_setup():
@@ -196,7 +204,7 @@ func _on_start_date_panel_button_pressed(node: Control) -> void:
 		push_warning("The start date cannot be changed after a country has been selected. Return to the main menu to choose another bookmark.")
 		return
 	_start_date_index = requested_date_index
-	start_button.disabled = false
+	start_button.disabled = SaveManager.current_save == null and _selected_country_identifier.is_empty()
 	start_date_selected.emit(_start_date_index)
 
 
@@ -243,7 +251,7 @@ func _on_visibility_changed() -> void:
 
 func _on_map_view_ready() -> void:
 	if GameSingleton.is_bookmark_loaded():
-		map_view._camera.position = map_view._map_to_world_coords(GameSingleton.get_bookmark_start_position())
+		map_view.look_at_map_position(GameSingleton.get_bookmark_start_position())
 
 
 func _on_map_view_province_clicked(province_number: int) -> void:
@@ -271,6 +279,8 @@ func _on_map_view_province_clicked(province_number: int) -> void:
 		push_warning("The clicked province has no selectable country.")
 		return
 
+	_selected_country_identifier = country_identifier
+	start_button.disabled = false
 	if selected_country_name_label != null:
 		selected_country_name_label.text = tr(country_identifier)
 
@@ -283,5 +293,5 @@ func _on_map_view_province_clicked(province_number: int) -> void:
 			break
 
 	var capital_position: Vector2 = PlayerSingleton.get_player_country_capital_position()
-	if capital_position != Vector2.ZERO and map_view._camera != null:
-		map_view._camera.position = map_view._map_to_world_coords(capital_position)
+	if capital_position != Vector2.ZERO:
+		map_view.look_at_map_position(capital_position)
