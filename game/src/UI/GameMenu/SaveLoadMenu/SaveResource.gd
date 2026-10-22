@@ -8,6 +8,12 @@ signal file_deleted
 signal trash_moved
 signal deleted
 
+# Save files are versioned independently of their display metadata. The simulation
+# payload is deliberately kept separate so future native serializers can extend it
+# without breaking existing ConfigFile metadata.
+const SAVE_SCHEMA_VERSION: int = 1
+const GAME_STATE_SECTION: String = "GameState"
+
 var save_name: StringName:
 	get: return save_name
 	set(v):
@@ -31,6 +37,40 @@ var file: ConfigFile = ConfigFile.new()
 func set_file_path(name: StringName, path: String) -> void:
 	file_path = path
 	save_name = name
+
+
+func set_game_state(state: Dictionary) -> Error:
+	if state.is_empty():
+		push_error("Refusing to write an empty game-state snapshot.")
+		return Error.ERR_INVALID_DATA
+
+	file.set_value(GAME_STATE_SECTION, "schema_version", SAVE_SCHEMA_VERSION)
+	for key: Variant in state:
+		if str(key).strip_edges().is_empty() or str(key) == "schema_version":
+			push_error("Invalid reserved or empty game-state key: ", key)
+			return Error.ERR_INVALID_PARAMETER
+		file.set_value(GAME_STATE_SECTION, str(key), state[key])
+	emit_changed()
+	return OK
+
+
+func get_game_state() -> Dictionary:
+	if not file.has_section_key(GAME_STATE_SECTION, "schema_version"):
+		return {}
+	var version: int = int(file.get_value(GAME_STATE_SECTION, "schema_version", 0))
+	if version != SAVE_SCHEMA_VERSION:
+		push_warning("Unsupported save-state schema version: ", version)
+		return {}
+
+	var state: Dictionary = {}
+	for key: String in file.get_section_keys(GAME_STATE_SECTION):
+		if key != "schema_version":
+			state[key] = file.get_value(GAME_STATE_SECTION, key)
+	return state
+
+
+func has_game_state() -> bool:
+	return not get_game_state().is_empty()
 
 
 func flush_save() -> Error:
