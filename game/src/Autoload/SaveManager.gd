@@ -49,7 +49,7 @@ func _ready() -> void:
 
 	for file_name: String in saves_dir.get_files():
 		# Atomic-save working files are recovery artifacts, never user-visible saves.
-		if file_name.ends_with(".tmp") or file_name.ends_with(".bak") or file_name.ends_with(".corrupt") or file_name.contains(".corrupt."):
+		if file_name.ends_with(".tmp") or file_name.ends_with(".bak") or file_name.ends_with(".corrupt") or (file_name.contains(".corrupt.") and not file_name.ends_with(".tres")):
 			continue
 		var save := SaveResource.new()
 		var save_path: String = saves_dir_path.path_join(file_name)
