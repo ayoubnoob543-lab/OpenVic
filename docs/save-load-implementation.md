@@ -22,8 +22,9 @@ References:
 ## Work completed in the parent repository
 
 - Save files are written through a sibling `.tmp` file and a `.bak` rollback copy.
-- Startup now checks for interrupted replacements before listing saves. It restores a readable backup or temporary file if the final save is missing or corrupt, and preserves a corrupt target for diagnosis instead of overwriting it.
-- Added GDScript tests for backup restoration, temporary-file recovery, and corrupt-target preservation. These tests have been committed but **have not been executed in a Godot/GdUnit runtime here**.
+- Startup now checks for interrupted replacements before listing saves. It prefers the newest readable temporary file, falls back to a readable backup, validates save metadata, and preserves a corrupt target for diagnosis instead of overwriting it.
+- The UI now explicitly tells the player when it saved only an interface checkpoint, and leaves the menu open instead of silently treating that as a full game save.
+- Added GDScript tests for backup restoration, temporary-file recovery, corrupt-target preservation, artifact validation, and choosing the newest valid artifact. These tests have been committed but **have not been executed in a Godot/GdUnit runtime here**.
 - This improves disk-level recovery only. It does not serialize or restore the native simulation and must not be treated as completion of full save/load.
 
 ## Required implementation
