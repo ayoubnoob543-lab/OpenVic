@@ -95,3 +95,19 @@ func test_unsupported_game_state_schema_is_not_loaded() -> void:
 	assert_bool(save_resource.has_game_state()).is_false()
 
 	DirAccess.remove_absolute(save_path)
+
+
+func test_replacing_snapshot_removes_stale_keys() -> void:
+	var save_resource: SaveResource = SaveResource.new()
+	assert_int(save_resource.set_game_state({
+		"snapshot_kind": "session_reference",
+		"obsolete_key": "stale",
+	})).is_equal(OK)
+	assert_int(save_resource.set_game_state({
+		"snapshot_kind": "session_reference",
+		"player_country": "USA",
+	})).is_equal(OK)
+
+	var state: Dictionary = save_resource.get_game_state()
+	assert_bool(state.has("obsolete_key")).is_false()
+	assert_str(str(state["player_country"])).is_equal("USA")
