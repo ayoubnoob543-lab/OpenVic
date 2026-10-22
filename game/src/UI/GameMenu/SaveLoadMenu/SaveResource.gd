@@ -133,7 +133,11 @@ static func _is_readable_config(path: String) -> bool:
 	if not FileAccess.file_exists(path):
 		return false
 	var candidate: ConfigFile = ConfigFile.new()
-	return candidate.load(path) == OK
+	if candidate.load(path) != OK:
+		return false
+	if not candidate.has_section_key("Save", "name"):
+		return false
+	return not str(candidate.get_value("Save", "name", "")).strip_edges().is_empty()
 
 
 static func recover_interrupted_save(path: String) -> Error:
