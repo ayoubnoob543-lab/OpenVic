@@ -4,11 +4,17 @@ extends Node
 @export var _model_manager: ModelManager
 @export var _game_session_menu: Control
 
+var _session_started: bool = false
+
 
 func _ready() -> void:
 	if GameSingleton.start_game_session() != OK:
-		push_error("Failed to setup game")
+		push_error("Failed to start game session")
+		set_process(false)
+		set_process_unhandled_input(false)
+		return
 
+	_session_started = true
 	_model_manager.generate_units()
 	_model_manager.generate_buildings()
 	MusicManager.generate_playlist()
@@ -20,12 +26,15 @@ func _ready() -> void:
 func _notification(what: int) -> void:
 	match what:
 		NOTIFICATION_PREDELETE:
-			if GameSingleton.end_game_session() != OK:
-				push_error("Failed to end game session")
+			if _session_started:
+				_session_started = false
+				if GameSingleton.end_game_session() != OK:
+					push_error("Failed to end game session")
 
 
 func _process(_delta: float) -> void:
-	GameSingleton.update_clock()
+	if _session_started:
+		GameSingleton.update_clock()
 
 # REQUIREMENTS:
 # * SS-42
