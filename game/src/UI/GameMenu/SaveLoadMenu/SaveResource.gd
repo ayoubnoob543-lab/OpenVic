@@ -155,10 +155,12 @@ static func recover_interrupted_save(path: String) -> Error:
 		return OK
 
 	var recovery_path: String = ""
-	if _is_readable_config(backup_path):
-		recovery_path = backup_path
-	elif _is_readable_config(temporary_path):
+	# The temporary file is written completely before the old target is moved
+	# to .bak, so prefer it when both artifacts survived an interrupted commit.
+	if _is_readable_config(temporary_path):
 		recovery_path = temporary_path
+	elif _is_readable_config(backup_path):
+		recovery_path = backup_path
 
 	if recovery_path.is_empty():
 		return ERR_FILE_CORRUPT if FileAccess.file_exists(absolute_path) else ERR_FILE_NOT_FOUND
