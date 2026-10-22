@@ -20,15 +20,19 @@ signal start_date_selected(index: int)
 @export var session_tag_dialog: ConfirmationDialog
 @export var delete_dialog: ConfirmationDialog
 @export var map_view: MapView
+@export var selected_country_name_label: Label
 
 var _id_to_tag: Array[StringName] = []
 var _requested_node_to_delete: Control
 var _start_date_index: int = -1
+var _game_setup_date_index: int = -1
 
 
 func _ready() -> void:
-	# TODO: Needs to be able to set the map to the political mapmode after the lobby has game-state data.
-	pass
+	if selected_country_name_label != null:
+		selected_country_name_label.text = tr("Select a country on the map")
+	if map_view != null:
+		map_view.disable_processing() if not GameSingleton.is_game_instance_setup() else map_view.enable_processing()
 
 
 func filter_for_tag(tag: StringName) -> void:
@@ -152,10 +156,17 @@ func _on_session_tag_dialog_confirmed() -> void:
 		push_error("Cannot setup game, no start date selected!")
 		return
 
-	# Game has to be setup (bookmark loaded) before opening the GameSession scene
-	if GameSingleton.setup_game(_start_date_index) != OK:
-		push_error("Failed to setup game")
-		return
+	# The game instance may already have been created when the player selected a country.
+	if GameSingleton.is_game_instance_setup():
+		if _game_setup_date_index != _start_date_index:
+			push_warning("The selected start date differs from the loaded game. Return to the lobby and choose the date before selecting a country.")
+			return
+	else:
+		if GameSingleton.setup_game(_start_date_index) != OK:
+			push_error("Failed to setup game")
+			return
+		_game_setup_date_index = _start_date_index
+
 	get_tree().change_scene_to_file("res://src/Systems/Session/GameSession.tscn")
 
 
@@ -167,10 +178,14 @@ func _on_save_node_delete_requested(node: Control) -> void:
 
 
 func _on_start_date_panel_button_pressed(node: Control) -> void:
-	if node is LobbyPanelButton and node.get_index(true) == _start_date_index:
+	var requested_date_index: int = node.get_index(true)
+	if requested_date_index == _start_date_index:
 		_on_start_button_pressed()
 		return
-	_start_date_index = node.get_index(true)
+	if GameSingleton.is_game_instance_setup() and requested_date_index != _game_setup_date_index:
+		push_warning("The start date cannot be changed after a country has been selected. Return to the main menu to choose another bookmark.")
+		return
+	_start_date_index = requested_date_index
 	start_button.disabled = false
 	start_date_selected.emit(_start_date_index)
 
@@ -217,12 +232,43 @@ func _on_visibility_changed() -> void:
 
 
 func _on_map_view_ready() -> void:
-	# TODO: Start at the bookmark's start position (used when loading a bookmark in the lobby)
-	# GameSingleton.get_bookmark_start_position()
-	pass
+	if GameSingleton.is_bookmark_loaded():
+		map_view._camera.position = map_view._map_to_world_coords(GameSingleton.get_bookmark_start_position())
 
 
 func _on_map_view_province_clicked(province_number: int) -> void:
-	# TODO: need to be able to call something like
-	# PlayerSingleton.set_player_country_by_province_number(province_number) here
-	pass
+	if province_number <= 0:
+		return
+	if _start_date_index < 0:
+		push_warning("Select a start date before choosing a country.")
+		if selected_country_name_label != null:
+			selected_country_name_label.text = tr("Select a start date first")
+		return
+
+	# The simulation instance is created lazily, on the first country selection.
+	if not GameSingleton.is_game_instance_setup():
+		if GameSingleton.setup_game(_start_date_index) != OK:
+			push_error("Could not load the selected bookmark; country selection was cancelled.")
+			return
+		_game_setup_date_index = _start_date_index
+
+	PlayerSingleton.set_player_country_by_province_number(province_number)
+	var country_identifier: String = PlayerSingleton.get_player_country_identifier()
+	if country_identifier.is_empty():
+		push_warning("The clicked province has no selectable country.")
+		return
+
+	if selected_country_name_label != null:
+		selected_country_name_label.text = tr(country_identifier)
+
+	# Prefer the political mapmode so country ownership and the current player are visible.
+	for mapmode_index: int in range(GameSingleton.get_mapmode_count()):
+		var mapmode_identifier: String = GameSingleton.get_mapmode_identifier(mapmode_index).to_lower()
+		if mapmode_identifier == "political" or mapmode_identifier.ends_with("_political"):
+			if GameSingleton.set_mapmode(mapmode_index) != OK:
+				push_warning("Country selected, but the political mapmode could not be activated.")
+			break
+
+	var capital_position: Vector2 = PlayerSingleton.get_player_country_capital_position()
+	if capital_position != Vector2.ZERO and map_view._camera != null:
+		map_view._camera.position = map_view._map_to_world_coords(capital_position)
