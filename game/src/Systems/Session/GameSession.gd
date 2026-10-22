@@ -8,6 +8,13 @@ var _session_started: bool = false
 
 
 func _ready() -> void:
+	if PlayerSingleton.get_player_country_identifier().is_empty():
+		push_error("Cannot start a game session without a selected player country.")
+		set_process(false)
+		if _map_view != null:
+			_map_view.disable_processing()
+		return
+
 	if GameSingleton.start_game_session() != OK:
 		push_error("Failed to start game session")
 		set_process(false)
