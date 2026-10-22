@@ -320,6 +320,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _mouse_over_viewport:
 			if _map_mesh.is_valid_uv_coord(_mouse_pos_map):
 				var province_number: int = GameSingleton.get_province_number_from_uv_coords(_mouse_pos_map)
+				if province_number <= 0:
+					return
 				province_right_clicked.emit(province_number)
 				var port_province_number: int = MapItemSingleton.get_clicked_port_province_number(_mouse_pos_map)
 				if port_province_number != 0:
