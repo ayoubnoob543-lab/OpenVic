@@ -91,7 +91,11 @@ func flush_save() -> Error:
 
 
 func _on_save_deleted_or_moved(save: SaveResource) -> void:
-	_save_dictionary.erase(get_save_file_name(save.save_name, save.session_tag))
+	var save_key: StringName = get_save_file_name(save.save_name, save.session_tag)
+	# A replaced resource can still emit a delayed delete/trash signal. Only remove
+	# the dictionary entry if it still points at that exact resource.
+	if _save_dictionary.get(save_key) == save:
+		_save_dictionary.erase(save_key)
 	if _dirty_save == save:
 		_dirty_save = null
 	if current_save == save:
