@@ -154,6 +154,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_current_date_string" qualifiers="const">
+			<return type="String" />
+			<description>
+				Returns the current simulation date as a YYYY.MM.DD string, or an empty string if no game instance has been set up.
+			</description>
+		</method>
 		<method name="is_parchment_mapmode_allowed" qualifiers="const">
 			<return type="bool" />
 			<description>
