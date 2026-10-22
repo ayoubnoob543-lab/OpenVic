@@ -106,7 +106,7 @@ func _ready() -> void:
 		var map_mesh_class: String = map_mesh_resource.get_class() if map_mesh_resource != null else "<null>"
 		push_error("Invalid map mesh class: ", map_mesh_class, " (expected MapMesh)")
 		return
-	_map_mesh = map_mesh_resource
+	_map_mesh = map_mesh_resource as MapMesh
 
 	_map_mesh.set_aspect_ratio(GameSingleton.get_map_aspect_ratio())
 
