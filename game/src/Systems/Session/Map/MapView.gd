@@ -86,6 +86,9 @@ var _viewport_dims: Vector2 = Vector2(1, 1)
 
 
 func _ready() -> void:
+	# Early setup failures must not leave input or frame processing active.
+	disable_processing()
+
 	if not _camera:
 		push_error("MapView's _camera variable hasn't been set!")
 		return
@@ -143,6 +146,7 @@ func _ready() -> void:
 	(_map_background_instance.mesh as PlaneMesh).set_size(Vector2(scaled_dims.x, scaled_dims.z))
 
 	_map_text.generate_map_names()
+	enable_processing()
 
 
 func _notification(what: int) -> void:
