@@ -12,7 +12,7 @@ pressed = true
 [sub_resource type="Shortcut" id="Shortcut_is4jx"]
 events = [SubResource("InputEventAction_mgy3w")]
 
-[node name="LobbyMenu" type="HBoxContainer" unique_id=1953886684 node_paths=PackedStringArray("game_select_start_date", "game_select_save_tab", "game_select_save_list", "start_button", "session_tag_line_edit", "session_tag_dialog", "delete_dialog", "map_view")]
+[node name="LobbyMenu" type="HBoxContainer" unique_id=1953886684 node_paths=PackedStringArray("game_select_start_date", "game_select_save_tab", "game_select_save_list", "start_button", "session_tag_line_edit", "session_tag_dialog", "delete_dialog", "map_view", "selected_country_name_label")]
 editor_description = "UI-36"
 anchors_preset = 15
 anchor_right = 1.0
@@ -31,6 +31,7 @@ session_tag_line_edit = NodePath("GameStartPanel/VBoxContainer/SessionTagEdit")
 session_tag_dialog = NodePath("SessionTagDialog")
 delete_dialog = NodePath("DeleteDialog")
 map_view = NodePath("MapView")
+selected_country_name_label = NodePath("GameStartPanel/VBoxContainer/SelectedCountryNameLabel")
 
 [node name="GameSelectPanel" type="PanelContainer" parent="." unique_id=472454380]
 layout_mode = 2
@@ -106,7 +107,7 @@ mouse_filter = 2
 
 [node name="SelectedCountryNameLabel" type="Label" parent="GameStartPanel/VBoxContainer" unique_id=757439158]
 layout_mode = 2
-text = "Unknown Country"
+text = "Select a country on the map"
 horizontal_alignment = 1
 
 [node name="Spacer2" type="Control" parent="GameStartPanel/VBoxContainer" unique_id=1584711331]
