@@ -50,6 +50,9 @@ func set_game_state(state: Dictionary) -> Error:
 			push_error("Invalid reserved or empty game-state key: ", key)
 			return Error.ERR_INVALID_PARAMETER
 
+	# Replace the snapshot as a whole; keeping keys from an older snapshot
+	# could silently resurrect stale state after a later load.
+	file.erase_section(GAME_STATE_SECTION)
 	file.set_value(GAME_STATE_SECTION, "schema_version", SAVE_SCHEMA_VERSION)
 	for key: Variant in state:
 		file.set_value(GAME_STATE_SECTION, str(key), state[key])
