@@ -111,3 +111,50 @@ func test_replacing_snapshot_removes_stale_keys() -> void:
 	var state: Dictionary = save_resource.get_game_state()
 	assert_bool(state.has("obsolete_key")).is_false()
 	assert_str(str(state["player_country"])).is_equal("USA")
+
+
+
+func test_recovery_restores_backup_when_final_rename_was_interrupted() -> void:
+	var save_path: String = ProjectSettings.globalize_path(
+		"user://save-recovery-test-%s.cfg" % Time.get_ticks_usec()
+	)
+	var backup: ConfigFile = ConfigFile.new()
+	backup.set_value("Save", "name", "recovered-save")
+	backup.set_value("Save", "session_tag", "recovery-test")
+	backup.set_value("GameState", "schema_version", SaveResource.SAVE_SCHEMA_VERSION)
+	backup.set_value("GameState", "snapshot_kind", "session_reference")
+	assert_int(backup.save(save_path + ".bak")).is_equal(OK)
+
+	assert_int(SaveResource.recover_interrupted_save(save_path)).is_equal(OK)
+	assert_bool(FileAccess.file_exists(save_path)).is_true()
+	assert_bool(FileAccess.file_exists(save_path + ".bak")).is_false()
+	var recovered: ConfigFile = ConfigFile.new()
+	assert_int(recovered.load(save_path)).is_equal(OK)
+	assert_str(str(recovered.get_value("Save", "name", ""))).is_equal("recovered-save")
+
+	DirAccess.remove_absolute(save_path)
+
+
+func test_recovery_preserves_corrupt_target_and_restores_valid_backup() -> void:
+	var save_path: String = ProjectSettings.globalize_path(
+		"user://save-corrupt-recovery-test-%s.cfg" % Time.get_ticks_usec()
+	)
+	var corrupt_file: FileAccess = FileAccess.open(save_path, FileAccess.WRITE)
+	assert_object(corrupt_file).is_not_null()
+	corrupt_file.store_string("this is not a valid ConfigFile [")
+	corrupt_file.close()
+
+	var backup: ConfigFile = ConfigFile.new()
+	backup.set_value("Save", "name", "backup-save")
+	backup.set_value("Save", "session_tag", "recovery-test")
+	assert_int(backup.save(save_path + ".bak")).is_equal(OK)
+
+	assert_int(SaveResource.recover_interrupted_save(save_path)).is_equal(OK)
+	assert_bool(FileAccess.file_exists(save_path)).is_true()
+	assert_bool(FileAccess.file_exists(save_path + ".corrupt")).is_true()
+	var recovered: ConfigFile = ConfigFile.new()
+	assert_int(recovered.load(save_path)).is_equal(OK)
+	assert_str(str(recovered.get_value("Save", "name", ""))).is_equal("backup-save")
+
+	DirAccess.remove_absolute(save_path)
+	DirAccess.remove_absolute(save_path + ".corrupt")
