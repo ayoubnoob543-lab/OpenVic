@@ -111,7 +111,8 @@ func _on_delete_dialog_confirmed() -> void:
 
 func _on_overwrite_dialog_confirmed() -> void:
 	var new_save: SaveResource = SaveManager.make_new_save(_submitted_text)
-	if GameSingleton.is_game_session_active():
+	var saved_session_checkpoint: bool = GameSingleton.is_game_session_active()
+	if saved_session_checkpoint:
 		# This is a versioned session checkpoint, not yet a full simulation dump:
 		# economy, POPs, armies, diplomacy and RNG state need native serializers.
 		var checkpoint: Dictionary = {
@@ -132,6 +133,10 @@ func _on_overwrite_dialog_confirmed() -> void:
 	var flush_error: Error = SaveManager.flush_save()
 	if flush_error != OK:
 		push_error("Could not write save file; the save menu will remain open.")
+		return
+	if saved_session_checkpoint:
+		_label.text = tr("Interface checkpoint saved only; full simulation saving is not implemented yet.")
+		push_warning("Only interface metadata was saved. The simulation state was not saved.")
 		return
 	_on_close_button_pressed()
 
