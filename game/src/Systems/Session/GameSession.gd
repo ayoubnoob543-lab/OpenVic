@@ -76,6 +76,7 @@ func _on_map_view_province_clicked(province_number: int) -> void:
 
 
 func _on_map_view_province_right_clicked(province_number: int) -> void:
-	# TODO - open diplomacy screen on province owner or viewed country if province has no owner
-	#Events.NationManagementScreens.open_nation_management_screen(NationManagement.Screen.DIPLOMACY)
-	PlayerSingleton.set_player_country_by_province_number(province_number)
+	if province_number <= 0:
+		return
+	# Right-click currently emits a context action only. It must never change
+	# the active player country; diplomacy and movement commands will be added here.
