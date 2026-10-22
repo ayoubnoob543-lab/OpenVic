@@ -77,14 +77,52 @@ func has_game_state() -> bool:
 
 
 func flush_save() -> Error:
-	var result: Error = file.save(file_path)
+	if file_path.strip_edges().is_empty():
+		push_error("Cannot save without a file path.")
+		return Error.ERR_INVALID_PARAMETER
+
+	# Write to a sibling temporary file first so an interrupted write cannot
+	# truncate a previously valid save.
+	var absolute_path: String = ProjectSettings.globalize_path(file_path)
+	var temporary_path: String = absolute_path + ".tmp"
+	var backup_path: String = absolute_path + ".bak"
+	var result: Error = file.save(temporary_path)
 	if result != OK:
-		push_error("Failed to save game to '", file_path, "': ", error_string(result))
+		push_error("Failed to write temporary save '", temporary_path, "': ", error_string(result))
 		return result
 
+	var had_previous_save: bool = FileAccess.file_exists(absolute_path)
+	if had_previous_save:
+		if FileAccess.file_exists(backup_path):
+			var remove_backup_error: Error = DirAccess.remove_absolute(backup_path)
+			if remove_backup_error != OK:
+				DirAccess.remove_absolute(temporary_path)
+				push_error("Cannot replace old save backup: ", error_string(remove_backup_error))
+				return remove_backup_error
+		result = DirAccess.rename_absolute(absolute_path, backup_path)
+		if result != OK:
+			DirAccess.remove_absolute(temporary_path)
+			push_error("Cannot protect existing save before replacement: ", error_string(result))
+			return result
+
+	result = DirAccess.rename_absolute(temporary_path, absolute_path)
+	if result != OK:
+		DirAccess.remove_absolute(temporary_path)
+		if had_previous_save:
+			var restore_error: Error = DirAccess.rename_absolute(backup_path, absolute_path)
+			if restore_error != OK:
+				push_error("CRITICAL: save replacement and backup restoration both failed. Backup remains at '", backup_path, "'.")
+		push_error("Failed to commit save '", file_path, "': ", error_string(result))
+		return result
+
+	if had_previous_save and FileAccess.file_exists(backup_path):
+		var cleanup_error: Error = DirAccess.remove_absolute(backup_path)
+		if cleanup_error != OK:
+			push_warning("Save succeeded but backup cleanup failed: ", backup_path)
+
 	file_flushed.emit(file_path)
-	# Keep the metadata in memory so a later flush cannot overwrite the save
-	# with an empty ConfigFile after the first successful write.
+	# Keep the metadata in memory so later flushes do not overwrite the save
+	# with an empty ConfigFile.
 	return OK
 
 
