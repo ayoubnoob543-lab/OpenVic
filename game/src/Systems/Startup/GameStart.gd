@@ -43,12 +43,9 @@ func _setup_compatibility_mode_paths() -> void:
 				arg_search_path,
 			)
 		setting.set_value(arg_base_path.simplify_path())
-		if Vic2Settings.get_base_defines_path().is_empty():
-			push_warning(
-				"Ignoring invalid --base-path: ",
-				arg_base_path,
-				". Expected a Victoria II installation containing map/provinces.bmp, map/definition.csv, common/countries.txt, common/goods.txt and history/countries/."
-			)
+		var path_error := Vic2Settings.get_base_path_validation_error(arg_base_path.simplify_path())
+		if not path_error.is_empty():
+			push_warning("Ignoring invalid --base-path '", arg_base_path, "': ", path_error)
 	elif Vic2Settings.get_base_defines_path().is_empty() and arg_search_path:
 		# This will also search for a Steam install if the hint doesn't help
 		var discovered_path := Vic2Settings.find_base_path(arg_search_path)
