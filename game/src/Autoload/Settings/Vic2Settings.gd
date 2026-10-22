@@ -11,6 +11,12 @@ const SETTINGS_FILE: String = "user://vic2.cfg"
 #
 # General Settings
 const GENERAL_BASE_DEFINES_PATH := &"victoria_2/base_defines_path"
+const REQUIRED_BASE_FILES: PackedStringArray = [
+	"map/provinces.bmp",
+	"map/definition.csv",
+	"common/countries.txt",
+	"common/goods.txt",
+]
 
 var _base_path_find_dialog := FileDialog.new()
 
@@ -90,21 +96,30 @@ func find_base_path(search_path: String) -> String:
 	return result.simplify_path()
 
 
-func _is_valid_victoria_2_directory(path: String) -> bool:
-	if path.is_empty() or not path.is_absolute_path():
-		return false
+func get_base_path_validation_error(path: String) -> String:
+	if path.is_empty():
+		return "No Victoria II directory was provided."
+	if not path.is_absolute_path():
+		return "The Victoria II directory must be an absolute path."
 	if not DirAccess.dir_exists_absolute(path):
-		return false
+		return "The selected Victoria II directory does not exist."
 
-	# These files are part of the base game layout and distinguish a game
-	# installation from an arbitrary directory or an incomplete Steam library.
-	return (
-		FileAccess.file_exists(path.path_join("map/provinces.bmp"))
-		and FileAccess.file_exists(path.path_join("map/definition.csv"))
-		and FileAccess.file_exists(path.path_join("common/countries.txt"))
-		and FileAccess.file_exists(path.path_join("common/goods.txt"))
-		and DirAccess.dir_exists_absolute(path.path_join("history/countries"))
-	)
+	# These files distinguish a game installation from an arbitrary directory
+	# or an incomplete Steam library, without scanning the entire installation.
+	var missing_paths: PackedStringArray = []
+	for relative_path: String in REQUIRED_BASE_FILES:
+		if not FileAccess.file_exists(path.path_join(relative_path)):
+			missing_paths.append(relative_path)
+	if not DirAccess.dir_exists_absolute(path.path_join("history/countries")):
+		missing_paths.append("history/countries/")
+
+	if missing_paths.is_empty():
+		return ""
+	return "Missing required Victoria II data: " + ", ".join(missing_paths)
+
+
+func _is_valid_victoria_2_directory(path: String) -> bool:
+	return get_base_path_validation_error(path).is_empty()
 
 
 func show_base_path_find_dialog() -> void:
