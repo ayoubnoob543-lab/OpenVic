@@ -213,18 +213,27 @@ godot::Error GameSingleton::setup_game(int32_t bookmark_index) {
 	    bookmark_index_t(bookmark_index)
 	);
 	ERR_FAIL_NULL_V_MSG(bookmark, FAILED, Utilities::format("Failed to get bookmark with index: %d", bookmark_index));
-	bool ret = game_manager.setup_instance(*bookmark);
+	if (!game_manager.setup_instance(*bookmark)) {
+		UtilityFunctions::push_error("Failed to initialise the selected bookmark.");
+		return FAILED;
+	}
 
-
-	ret &= MenuSingleton::get_singleton()->_population_menu_update_provinces() == OK;
+	MenuSingleton* menu_singleton = MenuSingleton::get_singleton();
+	ERR_FAIL_NULL_V_MSG(menu_singleton, FAILED, "Menu singleton is unavailable during game setup.");
+	if (menu_singleton->_population_menu_update_provinces() != OK) {
+		UtilityFunctions::push_error("Failed to initialise province population UI data.");
+		return FAILED;
+	}
 
 	// The lobby chooses the player country after the user selects an owned province.
 	// Reset stale pointers before a fresh game instance is exposed to the UI.
-	PlayerSingleton::get_singleton()->reset_player_singleton();
+	PlayerSingleton* player_singleton = PlayerSingleton::get_singleton();
+	ERR_FAIL_NULL_V_MSG(player_singleton, FAILED, "Player singleton is unavailable during game setup.");
+	player_singleton->reset_player_singleton();
 
 	// Research should come from country history / player actions, not a hard-coded test technology.
 
-	return ERR(ret);
+	return OK;
 }
 
 bool GameSingleton::is_game_instance_setup() const {
@@ -475,6 +484,11 @@ godot::Error GameSingleton::_load_map_images() {
 	godot::Error err = OK;
 
 	const Vector2i map_dims = get_map_dims();
+	ERR_FAIL_COND_V_MSG(
+		map_dims.x <= 0 || map_dims.y <= 0,
+		FAILED,
+		Utilities::format("Invalid province map dimensions: %dx%d", map_dims.x, map_dims.y)
+	);
 
 	// For each dimension of the image, this finds the small number of equal subdivisions
 	// required get the individual texture dims under GPU_DIM_LIMIT
@@ -487,6 +501,7 @@ godot::Error GameSingleton::_load_map_images() {
 
 	MapDefinition::shape_pixel_t const* province_shape_data =
 	    get_definition_manager().get_map_definition().get_province_shape_image().data();
+	ERR_FAIL_NULL_V_MSG(province_shape_data, FAILED, "Province shape image data is unavailable.");
 
 	const Vector2i divided_dims = map_dims / image_subdivisions;
 	const int64_t subdivision_width = divided_dims.x * sizeof(MapDefinition::shape_pixel_t);
