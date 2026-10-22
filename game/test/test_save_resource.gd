@@ -46,7 +46,8 @@ func test_versioned_game_state_survives_flush_and_reload() -> void:
 	assert_str(str(loaded_state["player_country"])).is_equal("USA")
 	assert_int(int(loaded_state["selected_province"])).is_equal(1)
 	assert_int(int(loaded_state["mapmode_index"])).is_equal(0)
-	assert_that(loaded_state["bookmark_start_position"]).is_equal(Vector2(0.5, 0.5))
+	assert_float(loaded_state["bookmark_start_position"].x).is_equal(0.5)
+	assert_float(loaded_state["bookmark_start_position"].y).is_equal(0.5)
 
 	DirAccess.remove_absolute(save_path)
 
