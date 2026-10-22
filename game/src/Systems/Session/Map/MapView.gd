@@ -101,14 +101,12 @@ func _ready() -> void:
 		return
 	_map_shader_material = map_material
 
-	if not _map_mesh_instance.mesh is MapMesh:
-		push_error(
-			"Invalid map mesh class: ",
-			_map_mesh_instance.mesh.get_class(),
-			"(expected MapMesh)",
-		)
+	var map_mesh_resource: Mesh = _map_mesh_instance.mesh
+	if not map_mesh_resource is MapMesh:
+		var map_mesh_class: String = map_mesh_resource.get_class() if map_mesh_resource != null else "<null>"
+		push_error("Invalid map mesh class: ", map_mesh_class, " (expected MapMesh)")
 		return
-	_map_mesh = _map_mesh_instance.mesh
+	_map_mesh = map_mesh_resource
 
 	_map_mesh.set_aspect_ratio(GameSingleton.get_map_aspect_ratio())
 
@@ -134,12 +132,10 @@ func _ready() -> void:
 		push_error("MapView's _map_background_instance variable hasn't been set!")
 		return
 
-	if not _map_background_instance.mesh is PlaneMesh:
-		push_error(
-			"Invalid map background mesh class: ",
-			_map_background_instance.mesh.get_class(),
-			"(expected PlaneMesh)",
-		)
+	var background_mesh_resource: Mesh = _map_background_instance.mesh
+	if not background_mesh_resource is PlaneMesh:
+		var background_mesh_class: String = background_mesh_resource.get_class() if background_mesh_resource != null else "<null>"
+		push_error("Invalid map background mesh class: ", background_mesh_class, " (expected PlaneMesh)")
 		return
 	var scaled_dims: Vector3 = _map_background_instance.transform.affine_inverse() * Vector3(_map_mesh_dims.x, 0.0, _map_mesh_dims.y)
 	scaled_dims.x *= 1.0 + 2.0 * _map_mesh.get_repeat_proportion()
