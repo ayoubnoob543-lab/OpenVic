@@ -113,22 +113,23 @@ void PlayerSingleton::set_player_country(CountryInstance* new_player_country) {
 	game_singleton._on_gamestate_updated();
 }
 
-void PlayerSingleton::set_player_country_by_province_number(int32_t province_number) {
+bool PlayerSingleton::set_player_country_by_province_number(int32_t province_number) {
 	InstanceManager* instance_manager = GameSingleton::get_singleton()->get_instance_manager();
-	ERR_FAIL_NULL(instance_manager);
+	ERR_FAIL_NULL_V(instance_manager, false);
 
 	ProvinceInstance* province_instance = instance_manager->get_map_instance().get_province_instance_from_number(
 	    province_number
 	);
-	ERR_FAIL_NULL(province_instance);
+	ERR_FAIL_NULL_V_MSG(province_instance, false, Utilities::format("Invalid province number: %d", province_number));
 
 	CountryInstance* const owner = province_instance->get_owner();
 	if (owner == nullptr) {
 		SPDLOG_INFO("Ignoring country selection on unowned province {}", province_number);
-		return;
+		return false;
 	}
 
 	set_player_country(owner);
+	return true;
 }
 
 String PlayerSingleton::get_player_country_identifier() const {
