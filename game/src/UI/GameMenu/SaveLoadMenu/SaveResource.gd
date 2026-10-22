@@ -40,17 +40,27 @@ func flush_save() -> Error:
 		return result
 
 	file_flushed.emit(file_path)
-	file.clear()
+	# Keep the metadata in memory so a later flush cannot overwrite the save
+	# with an empty ConfigFile after the first successful write.
 	return OK
 
 
 func load_save(path: String = file_path) -> Error:
+	# Load into a temporary ConfigFile so a corrupt file cannot partially replace
+	# metadata that is already associated with this resource.
+	var loaded_file: ConfigFile = ConfigFile.new()
+	var result: Error = loaded_file.load(path)
+	if result != OK:
+		return result
+
+	var loaded_save_name: String = str(loaded_file.get_value("Save", "name", save_name))
+	var loaded_session_tag: String = str(loaded_file.get_value("Save", "session_tag", session_tag))
+	file = loaded_file
+	file_path = path
+	save_name = StringName(loaded_save_name)
+	session_tag = StringName(loaded_session_tag)
 	file_loaded.emit()
-	var result := file.load(path)
-	session_tag = file.get_value("Save", "session_tag", session_tag)
-	if path != file_path:
-		set_file_path(file.get_value("Save", "name", save_name), path)
-	return result
+	return OK
 
 
 func get_save_file_time() -> int:
