@@ -123,6 +123,9 @@ func _ready() -> void:
 		map_mesh_aabb.position.x - map_mesh_aabb.end.x,
 		map_mesh_aabb.position.z - map_mesh_aabb.end.z
 	))
+	if _map_mesh_dims.x <= 0.0 or _map_mesh_dims.y <= 0.0:
+		push_error("Map mesh has invalid bounds: ", _map_mesh_dims)
+		return
 
 	PlayerSingleton.province_selected.connect(_on_province_selected)
 
@@ -145,6 +148,9 @@ func _ready() -> void:
 	scaled_dims.z *= 2.0
 	(_map_background_instance.mesh as PlaneMesh).set_size(Vector2(scaled_dims.x, scaled_dims.z))
 
+	if _map_text == null:
+		push_error("MapView's _map_text variable hasn't been set!")
+		return
 	_map_text.generate_map_names()
 	enable_processing()
 
