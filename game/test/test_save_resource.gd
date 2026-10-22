@@ -194,3 +194,26 @@ func test_recovery_rejects_parseable_config_without_save_metadata() -> void:
 	assert_bool(FileAccess.file_exists(save_path + ".tmp")).is_true()
 
 	DirAccess.remove_absolute(save_path + ".tmp")
+
+
+
+func test_recovery_prefers_latest_valid_temporary_file_over_backup() -> void:
+	var save_path: String = ProjectSettings.globalize_path(
+		"user://save-recovery-preference-test-%s.cfg" % Time.get_ticks_usec()
+	)
+	var backup: ConfigFile = ConfigFile.new()
+	backup.set_value("Save", "name", "older-backup")
+	assert_int(backup.save(save_path + ".bak")).is_equal(OK)
+
+	var temporary: ConfigFile = ConfigFile.new()
+	temporary.set_value("Save", "name", "latest-temporary")
+	assert_int(temporary.save(save_path + ".tmp")).is_equal(OK)
+
+	assert_int(SaveResource.recover_interrupted_save(save_path)).is_equal(OK)
+	var recovered: ConfigFile = ConfigFile.new()
+	assert_int(recovered.load(save_path)).is_equal(OK)
+	assert_str(str(recovered.get_value("Save", "name", ""))).is_equal("latest-temporary")
+	assert_bool(FileAccess.file_exists(save_path + ".bak")).is_false()
+	assert_bool(FileAccess.file_exists(save_path + ".tmp")).is_false()
+
+	DirAccess.remove_absolute(save_path)
