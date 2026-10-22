@@ -68,6 +68,7 @@ void GameSingleton::_bind_methods() {
 	OV_BIND_METHOD(GameSingleton::start_game_session);
 	OV_BIND_METHOD(GameSingleton::end_game_session);
 	OV_BIND_METHOD(GameSingleton::is_game_session_active);
+	OV_BIND_METHOD(GameSingleton::get_current_date_string);
 
 	OV_BIND_METHOD(GameSingleton::get_province_number_from_uv_coords, { "coords" });
 
@@ -472,6 +473,12 @@ godot::Error GameSingleton::set_mapmode(int32_t index) {
 bool GameSingleton::is_parchment_mapmode_allowed() const {
 	/* Disallows parchment mapmode, e.g. for the cosmetic terrain mapmode */
 	return mapmode->is_parchment_mapmode_allowed;
+}
+
+String GameSingleton::get_current_date_string() const {
+	InstanceManager const* instance_manager = game_manager.get_instance_manager();
+	ERR_FAIL_NULL_V_MSG(instance_manager, String {}, "Cannot read current date before a game instance is set up.");
+	return convert_to<String>(instance_manager->get_today().to_string(true, true, true));
 }
 
 godot::Error GameSingleton::update_clock() {
