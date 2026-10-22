@@ -8,6 +8,7 @@
 
 #include "openvic-extension/classes/GUIScrollbar.hpp"
 #include "openvic-extension/core/Bind.hpp"
+#include "openvic-extension/core/Convert.hpp"
 #include "openvic-extension/singletons/GameSingleton.hpp"
 #include "openvic-extension/singletons/MenuSingleton.hpp"
 
@@ -120,7 +121,7 @@ bool PlayerSingleton::set_player_country_by_province_number(int32_t province_num
 	ProvinceInstance* province_instance = instance_manager->get_map_instance().get_province_instance_from_number(
 	    province_number
 	);
-	ERR_FAIL_NULL_V_MSG(province_instance, false, Utilities::format("Invalid province number: %d", province_number));
+	ERR_FAIL_NULL_V_MSG(province_instance, false, "Invalid province number");
 
 	CountryInstance* const owner = province_instance->get_owner();
 	if (owner == nullptr) {
