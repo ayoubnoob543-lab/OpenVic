@@ -163,16 +163,41 @@ func _on_save_load_button_pressed() -> void:
 	var state: Dictionary = _selected_save_resource.get_game_state()
 	if state.is_empty():
 		push_warning("This save contains metadata only and cannot restore a game session.")
-		_label.text = tr("This save has no simulation state")
+		_label.text = tr("This save has no game-state checkpoint")
 		return
 
-	if not bool(state.get("simulation_state_complete", false)):
-		push_warning("This file is only a session checkpoint; full simulation restore is not implemented yet.")
-		_label.text = tr("Full game-state loading is not available for this checkpoint")
+	if not GameSingleton.is_game_session_active():
+		push_warning("A checkpoint can only restore its interface state inside an active game session.")
+		_label.text = tr("Start the same game session before loading this checkpoint")
 		return
 
-	# Do not report a successful load until a native simulation restore routine exists.
-	push_error("The save contains a full-state marker, but no native restore routine is connected.")
+	# This checkpoint intentionally restores only the interface state it records.
+	# It must not claim to rewind the simulation's economy, population or date.
+	if str(state.get("player_country", "")) != PlayerSingleton.get_player_country_identifier():
+		push_warning("Checkpoint belongs to a different player country.")
+		_label.text = tr("This checkpoint belongs to another country")
+		return
+	if str(state.get("current_date", "")) != GameSingleton.get_current_date_string():
+		push_warning("Checkpoint date differs from the current simulation date; refusing a misleading partial restore.")
+		_label.text = tr("Checkpoint date does not match the current game")
+		return
+
+	var mapmode_index: int = int(state.get("mapmode_index", -1))
+	if mapmode_index < 0 or mapmode_index >= GameSingleton.get_mapmode_count():
+		push_warning("Checkpoint contains an invalid mapmode index.")
+		return
+	if GameSingleton.set_mapmode(mapmode_index) != OK:
+		push_error("Failed to restore checkpoint mapmode.")
+		return
+
+	var selected_province: int = int(state.get("selected_province", -1))
+	if selected_province >= 0:
+		PlayerSingleton.set_selected_province_by_number(selected_province)
+	else:
+		PlayerSingleton.unset_selected_province()
+
+	_label.text = tr("Checkpoint interface state restored")
+	_selected_save_resource.file_loaded.emit()
 
 
 func _on_save_node_delete_requested(node: Control) -> void:
