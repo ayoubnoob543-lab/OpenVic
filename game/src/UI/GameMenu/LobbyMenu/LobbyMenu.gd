@@ -153,6 +153,7 @@ func _on_session_tag_dialog_confirmed() -> void:
 	# Game has to be setup (bookmark loaded) before opening the GameSession scene
 	if GameSingleton.setup_game(_start_date_index) != OK:
 		push_error("Failed to setup game")
+		return
 	get_tree().change_scene_to_file("res://src/Systems/Session/GameSession.tscn")
 
 
