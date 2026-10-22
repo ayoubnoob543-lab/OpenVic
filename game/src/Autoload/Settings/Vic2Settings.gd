@@ -150,6 +150,7 @@ func show_base_path_find_dialog() -> void:
 		_show_alert()
 		_base_path_find_dialog.popup_centered_ratio()
 		await _base_path_find_dialog.dir_selected
+	_base_path_find_dialog.dir_selected.disconnect(_on_base_path_find_dialog_dir_selected)
 	_base_path_find_dialog.canceled.disconnect(_on_base_path_find_dialog_failed)
 	get_tree().paused = false
 
