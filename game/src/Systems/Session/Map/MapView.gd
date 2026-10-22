@@ -94,10 +94,8 @@ func _ready() -> void:
 		return
 
 	# The lobby may centre the camera as soon as this node emits ready.
-	# Ensure look_at_map_position() has real dimensions rather than its 1x1 fallback.
-	_viewport_dims = Vector2(GameSettings.get_game_resolution())
-	if _viewport_dims.x <= 0.0 or _viewport_dims.y <= 0.0:
-		_viewport_dims = Vector2(get_viewport().get_visible_rect().size)
+	# Ensure camera math never divides by zero if display settings are not initialized.
+	_refresh_viewport_dims()
 
 	if not _map_mesh_instance:
 		push_error("MapView's _map_mesh_instance variable hasn't been set!")
@@ -196,6 +194,20 @@ func _viewport_to_world_coords(pos_viewport: Vector2) -> Vector3:
 
 func _viewport_to_map_coords(pos_viewport: Vector2) -> Vector2:
 	return _world_to_map_coords(_viewport_to_world_coords(pos_viewport))
+
+
+func _refresh_viewport_dims() -> void:
+	var configured_dims: Vector2 = Vector2(GameSettings.get_game_resolution())
+	if configured_dims.x > 0.0 and configured_dims.y > 0.0:
+		_viewport_dims = configured_dims
+		return
+
+	var visible_dims: Vector2 = Vector2(get_viewport().get_visible_rect().size)
+	if visible_dims.x > 0.0 and visible_dims.y > 0.0:
+		_viewport_dims = visible_dims
+	elif _viewport_dims.x <= 0.0 or _viewport_dims.y <= 0.0:
+		# Keep the fallback finite until Godot reports a real viewport size.
+		_viewport_dims = Vector2.ONE
 
 
 func look_at_map_position(pos: Vector2) -> void:
@@ -355,7 +367,7 @@ func _process(delta: float) -> void:
 	if _cardinal_movement_vector != Vector2.ZERO and get_window().gui_get_focus_owner() != null:
 		_cardinal_movement_vector = Vector2.ZERO
 
-	_viewport_dims = Vector2(GameSettings.get_game_resolution())
+	_refresh_viewport_dims()
 	# Process movement
 	_movement_process(delta)
 	# Keep within map bounds
