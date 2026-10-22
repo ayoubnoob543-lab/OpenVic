@@ -46,12 +46,14 @@ func _on_game_session_menu_button_pressed() -> void:
 
 
 func _on_map_view_ready() -> void:
-	# Set the camera's starting position
-	_map_view._camera.position = _map_view._map_to_world_coords(
-		# Start at the player country's capital position (when loading a save game in the lobby or
-		# entering the actual game)
-		PlayerSingleton.get_player_country_capital_position()
-	)
+	# Prefer the player's capital, then the selected bookmark's initial camera position.
+	var start_position: Vector2 = PlayerSingleton.get_player_country_capital_position()
+	if start_position == Vector2.ZERO:
+		if GameSingleton.is_bookmark_loaded():
+			start_position = GameSingleton.get_bookmark_start_position()
+		else:
+			start_position = Vector2(0.5, 0.5)
+	_map_view._camera.position = _map_view._map_to_world_coords(start_position)
 
 
 func _on_map_view_province_hovered(province_number: int) -> void:
