@@ -27,6 +27,28 @@ func _ready() -> void:
 		push_error("Unable to open save directory: ", saves_dir_path)
 		return
 
+
+	# Repair interrupted atomic replacements before enumerating user-visible saves.
+	# Re-open the directory afterwards so the scan sees restored filenames.
+	var recovery_candidates: Dictionary = {}
+	for artifact_name: String in saves_dir.get_files():
+		if not artifact_name.ends_with(".tmp") and not artifact_name.ends_with(".bak"):
+			continue
+		var base_name: String = artifact_name.trim_suffix(".tmp").trim_suffix(".bak")
+		var base_path: String = saves_dir_path.path_join(base_name)
+		if recovery_candidates.has(base_path):
+			continue
+		recovery_candidates[base_path] = true
+		var recovery_error: Error = SaveResource.recover_interrupted_save(base_path)
+		if recovery_error != OK:
+			push_warning("Could not recover interrupted save '", base_path, "': ", error_string(recovery_error))
+
+	saves_dir = DirAccess.open(saves_dir_path)
+	if saves_dir == null:
+		push_error("Unable to reopen save directory after recovery: ", saves_dir_path)
+		return
+
+
 	for file_name: String in saves_dir.get_files():
 		# Atomic-save working files are recovery artifacts, never user-visible saves.
 		if file_name.ends_with(".tmp") or file_name.ends_with(".bak"):
