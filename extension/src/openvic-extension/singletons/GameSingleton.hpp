@@ -95,6 +95,7 @@ namespace OpenVic {
 		godot::Error start_game_session();
 		godot::Error end_game_session();
 		bool is_game_session_active() const;
+	godot::String get_current_date_string() const;
 
 		int32_t get_province_number_from_uv_coords(godot::Vector2 const& coords) const;
 
