@@ -129,6 +129,59 @@ func flush_save() -> Error:
 	return OK
 
 
+static func _is_readable_config(path: String) -> bool:
+	if not FileAccess.file_exists(path):
+		return false
+	var candidate: ConfigFile = ConfigFile.new()
+	return candidate.load(path) == OK
+
+
+static func recover_interrupted_save(path: String) -> Error:
+	# Recover a save interrupted between the backup and final rename operations.
+	# Never promote an artifact unless ConfigFile can parse it successfully.
+	var absolute_path: String = ProjectSettings.globalize_path(path)
+	var temporary_path: String = absolute_path + ".tmp"
+	var backup_path: String = absolute_path + ".bak"
+
+	if _is_readable_config(absolute_path):
+		if FileAccess.file_exists(temporary_path):
+			DirAccess.remove_absolute(temporary_path)
+		if FileAccess.file_exists(backup_path):
+			DirAccess.remove_absolute(backup_path)
+		return OK
+
+	var recovery_path: String = ""
+	if _is_readable_config(backup_path):
+		recovery_path = backup_path
+	elif _is_readable_config(temporary_path):
+		recovery_path = temporary_path
+
+	if recovery_path.is_empty():
+		return ERR_FILE_CORRUPT if FileAccess.file_exists(absolute_path) else ERR_FILE_NOT_FOUND
+
+	# Preserve an existing corrupt target for diagnosis instead of deleting it.
+	var corrupt_path: String = absolute_path + ".corrupt"
+	if FileAccess.file_exists(absolute_path):
+		if FileAccess.file_exists(corrupt_path):
+			push_error("Cannot recover save because a previous corrupt file already exists: ", corrupt_path)
+			return ERR_ALREADY_EXISTS
+		var preserve_error: Error = DirAccess.rename_absolute(absolute_path, corrupt_path)
+		if preserve_error != OK:
+			return preserve_error
+
+	var restore_error: Error = DirAccess.rename_absolute(recovery_path, absolute_path)
+	if restore_error != OK:
+		if FileAccess.file_exists(corrupt_path) and not FileAccess.file_exists(absolute_path):
+			DirAccess.rename_absolute(corrupt_path, absolute_path)
+		return restore_error
+
+	if FileAccess.file_exists(temporary_path):
+		DirAccess.remove_absolute(temporary_path)
+	if FileAccess.file_exists(backup_path):
+		DirAccess.remove_absolute(backup_path)
+	return OK
+
+
 func load_save(path: String = file_path) -> Error:
 	# Load into a temporary ConfigFile so a corrupt file cannot partially replace
 	# metadata that is already associated with this resource.
