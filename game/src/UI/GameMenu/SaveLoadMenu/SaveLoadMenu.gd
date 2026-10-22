@@ -87,8 +87,15 @@ func _on_close_button_pressed() -> void:
 
 
 func _on_delete_dialog_confirmed() -> void:
-	_requested_node_to_delete.resource.delete()
+	if _requested_node_to_delete == null:
+		return
+
+	var delete_error: Error = _requested_node_to_delete.resource.delete()
+	if delete_error != OK:
+		return
+
 	_requested_node_to_delete.queue_free()
+	_requested_node_to_delete = null
 
 
 # REQUIREMENTS:
