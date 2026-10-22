@@ -52,7 +52,9 @@ func show_for_save() -> void:
 
 
 func _build_save_list() -> void:
-	_tag_selection_tab.add_tab("All")
+	# The scene starts with an "All" tab; only recreate it after the list was cleared.
+	if _tag_selection_tab.tab_count == 0:
+		_tag_selection_tab.add_tab("All")
 	for save_name: StringName in SaveManager._save_dictionary:
 		var save: SaveResource = SaveManager._save_dictionary[save_name]
 		var save_node := _create_save_node(save)
