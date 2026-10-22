@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <numbers>
+#include <utility>
 
 #include "openvic-extension/core/Bind.hpp"
 #include "openvic-extension/core/Convert.hpp"
@@ -87,6 +88,7 @@ godot::Error GFXPieChartTexture::_generate_pie_chart_image() {
 		 * Four samples per axis are enough to reduce visible stair-stepping without changing
 		 * the texture dimensions or the coordinates used by get_slice(). */
 		static constexpr int32_t samples_per_axis = 4;
+		static constexpr float samples_per_axis_float = static_cast<float>(samples_per_axis);
 		static constexpr float sample_count = static_cast<float>(samples_per_axis * samples_per_axis);
 
 		for (Vector2i point { 0, 0 }; point.y < pie_chart_diameter; ++point.y) {
@@ -101,8 +103,8 @@ godot::Error GFXPieChartTexture::_generate_pie_chart_image() {
 						Vector2 offset = point;
 						// Sample evenly inside the pixel instead of testing only its centre.
 						offset += Vector2 {
-						    (static_cast<float>(sample_x) + 0.5f) / samples_per_axis,
-						    (static_cast<float>(sample_y) + 0.5f) / samples_per_axis
+						    (static_cast<float>(sample_x) + 0.5f) / samples_per_axis_float,
+						    (static_cast<float>(sample_y) + 0.5f) / samples_per_axis_float
 						};
 						// Normalise to [0, 2], then translate to [-1, 1].
 						offset /= pie_chart_radius;
