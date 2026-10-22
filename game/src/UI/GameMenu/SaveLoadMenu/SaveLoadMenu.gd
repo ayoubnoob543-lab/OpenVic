@@ -105,7 +105,12 @@ func _on_delete_dialog_confirmed() -> void:
 
 
 func _on_overwrite_dialog_confirmed() -> void:
-	SaveManager.add_or_replace_save(SaveManager.make_new_save(_submitted_text))
+	var new_save: SaveResource = SaveManager.make_new_save(_submitted_text)
+	SaveManager.add_or_replace_save(new_save)
+	var flush_error: Error = SaveManager.flush_save()
+	if flush_error != OK:
+		push_error("Could not write save file; the save menu will remain open.")
+		return
 	_on_close_button_pressed()
 
 
