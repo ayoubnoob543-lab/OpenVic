@@ -32,3 +32,10 @@ References:
 ## Blocking repository boundary
 
 The main repository includes `extension/deps/openvic-simulation` as a Git submodule pointing at `OpenVicProject/OpenVic-Simulation`. The current connected GitHub write access can update the user's `OpenVic` repository, but cannot commit native changes to that upstream simulation repository. A real end-to-end implementation needs a writable fork of `OpenVic-Simulation` and the parent submodule updated to reference its commit.
+
+## Additional reference implementation
+
+Project Alice (a separate Victoria II reimplementation, not a drop-in library) has a concrete native save format in `src/gamestate/serialization.cpp` and reusable serialization primitives in `src/gamestate/serialization.hpp`. It demonstrates versioned headers, length-prefixed values, compressed sections, and explicit serializers for handwritten state. Use it as a design reference only; its in-memory structures and binary format are not compatible with OpenVic.
+
+- https://github.com/schombert/Project-Alice/blob/main/src/gamestate/serialization.cpp
+- https://github.com/schombert/Project-Alice/blob/main/src/gamestate/serialization.hpp
