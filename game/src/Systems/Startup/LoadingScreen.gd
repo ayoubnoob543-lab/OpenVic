@@ -14,10 +14,14 @@ func _ready() -> void:
 	if Engine.is_editor_hint(): return
 	thread = Thread.new()
 	# FS-3, UI-30, UIFUN-35
-	var quotes_file := FileAccess.open(quote_file_path, FileAccess.READ).get_as_text()
-	quotes = quotes_file.split("\n", false)
-	if quotes.is_empty():
-		quotes = [""]
+	var quotes_file: FileAccess = FileAccess.open(quote_file_path, FileAccess.READ)
+	if quotes_file == null:
+		push_warning("Unable to open loading screen quotes file: ", quote_file_path)
+		quotes = PackedStringArray([""])
+	else:
+		quotes = quotes_file.get_as_text().split("\n", false)
+		if quotes.is_empty():
+			quotes = PackedStringArray([""])
 	animation_player.play("loadingscreen_gear")
 
 
@@ -39,7 +43,11 @@ func start_loading_screen(thread_safe_function: Callable) -> void:
 	if thread != null and thread.is_started():
 		thread.wait_to_finish()
 
-	thread.start(thread_safe_function)
+	var thread_start_error: Error = thread.start(thread_safe_function)
+	if thread_start_error != OK:
+		push_error("Failed to start game initialization thread: ", error_string(thread_start_error))
+		quote_label.text = tr("Failed to start game initialization. Check the application logs and restart OpenVic.")
+		animation_player.stop()
 
 
 func try_update_loading_screen(percent_complete: float, quote_should_change := false) -> void:
