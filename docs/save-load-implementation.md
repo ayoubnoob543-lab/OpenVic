@@ -36,6 +36,8 @@ References:
 6. Add native round-trip tests that save, advance the simulation, reload, and compare a full-state checksum plus date and key entity data. Also test corrupt files, incompatible versions, and interrupted writes.
 7. Keep the UI checkpoint only as explicitly labelled interface metadata until the native round-trip path is implemented and tested.
 
+The upstream compatibility tracker also lists save files among the unfinished requirements: https://github.com/OpenVicProject/OpenVic/issues/468. The simulation repository's open issues currently do not expose an existing save/serialization task or a ready-made full-state serializer, so this needs a coordinated native feature rather than wiring a menu button to the current checkpoint.
+
 ## Blocking repository boundary
 
 The main repository includes `extension/deps/openvic-simulation` as a Git submodule pointing at `OpenVicProject/OpenVic-Simulation`. The current connected GitHub write access can update the user's `OpenVic` repository, but cannot commit native changes to that upstream simulation repository. A real end-to-end implementation needs a writable fork of `OpenVic-Simulation` and the parent submodule updated to reference its commit.
