@@ -109,9 +109,14 @@ func _on_overwrite_dialog_confirmed() -> void:
 	_on_close_button_pressed()
 
 
-func _on_save_line_edit_text_submitted(new_text) -> void:
-	_submitted_text = new_text
-	if SaveManager.has_save(new_text):
+func _on_save_line_edit_text_submitted(new_text: String) -> void:
+	_submitted_text = new_text.strip_edges()
+	if _submitted_text.is_empty():
+		push_warning("Save name cannot be empty.")
+		_save_line_edit.grab_focus()
+		return
+
+	if SaveManager.has_save(_submitted_text):
 		_overwrite_dialog.dialog_text = tr("Are you sure you want to overwrite {file_name}?").format({ "file_name": _submitted_text })
 		_overwrite_dialog.title = tr("Overwrite {file_name}").format({ "file_name": _submitted_text })
 		_overwrite_dialog.popup_centered()
