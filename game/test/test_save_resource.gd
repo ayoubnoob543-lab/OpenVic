@@ -158,3 +158,23 @@ func test_recovery_preserves_corrupt_target_and_restores_valid_backup() -> void:
 
 	DirAccess.remove_absolute(save_path)
 	DirAccess.remove_absolute(save_path + ".corrupt")
+
+
+
+func test_recovery_promotes_valid_temporary_file_when_target_and_backup_are_missing() -> void:
+	var save_path: String = ProjectSettings.globalize_path(
+		"user://save-temporary-recovery-test-%s.cfg" % Time.get_ticks_usec()
+	)
+	var temporary: ConfigFile = ConfigFile.new()
+	temporary.set_value("Save", "name", "temporary-save")
+	temporary.set_value("Save", "session_tag", "recovery-test")
+	assert_int(temporary.save(save_path + ".tmp")).is_equal(OK)
+
+	assert_int(SaveResource.recover_interrupted_save(save_path)).is_equal(OK)
+	assert_bool(FileAccess.file_exists(save_path)).is_true()
+	assert_bool(FileAccess.file_exists(save_path + ".tmp")).is_false()
+	var recovered: ConfigFile = ConfigFile.new()
+	assert_int(recovered.load(save_path)).is_equal(OK)
+	assert_str(str(recovered.get_value("Save", "name", ""))).is_equal("temporary-save")
+
+	DirAccess.remove_absolute(save_path)
