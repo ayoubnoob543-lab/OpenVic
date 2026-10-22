@@ -84,9 +84,25 @@ func get_base_defines_path() -> String:
 
 func find_base_path(search_path: String) -> String:
 	var result := GameSingleton.search_for_game_path(search_path)
-	if not result:
-		push_warning("Failed to find base path using ", search_path)
-	return result
+	if result.is_empty() or not _is_valid_victoria_2_directory(result):
+		push_warning("Failed to find a valid Victoria II installation using ", search_path)
+		return ""
+	return result.simplify_path()
+
+
+func _is_valid_victoria_2_directory(path: String) -> bool:
+	if path.is_empty() or not path.is_absolute_path():
+		return false
+	if not DirAccess.dir_exists_absolute(path):
+		return false
+
+	# These files are part of the base game layout and distinguish a game
+	# installation from an arbitrary directory or an incomplete Steam library.
+	return (
+		FileAccess.file_exists(path.path_join("map/provinces.bmp"))
+		and FileAccess.file_exists(path.path_join("common/countries.txt"))
+		and DirAccess.dir_exists_absolute(path.path_join("history/countries"))
+	)
 
 
 func show_base_path_find_dialog() -> void:
@@ -108,7 +124,9 @@ func show_base_path_find_dialog() -> void:
 
 
 func _base_defines_path_validate(_stg: Setting, val: Variant) -> bool:
-	return (val as String).is_absolute_path() and DirAccess.dir_exists_absolute(val)
+	if not val is String:
+		return false
+	return _is_valid_victoria_2_directory(val)
 
 
 func _show_alert() -> void:
@@ -131,7 +149,12 @@ func _on_base_path_find_dialog_failed() -> void:
 
 func _on_base_path_find_dialog_dir_selected(dir: String) -> void:
 	var setting := get_setting(GENERAL_BASE_DEFINES_PATH)
-	setting.set_value(GameSingleton.search_for_game_path(dir))
+	var detected_path := find_base_path(dir)
+	if detected_path.is_empty():
+		push_warning("The selected directory is not a valid Victoria II installation: ", dir)
+		setting.set_value("")
+		return
+	setting.set_value(detected_path)
 
 
 func _load_legacy_value(
