@@ -14,6 +14,7 @@ var is_save_menu: bool = true
 var _id_to_tag: Array[StringName] = []
 var _submitted_text: String = ""
 var _requested_node_to_delete: Control
+var _selected_save_resource: SaveResource
 
 
 func filter_for_tag(tag: StringName) -> void:
@@ -36,6 +37,8 @@ func show_for_load() -> void:
 	_save_load_button.text = "Load"
 	_save_line_edit.editable = false
 	is_save_menu = false
+	_selected_save_resource = null
+	_save_load_button.disabled = true
 	show()
 
 
@@ -48,6 +51,8 @@ func show_for_save() -> void:
 	_save_load_button.text = "Save"
 	_save_line_edit.editable = true
 	is_save_menu = true
+	_selected_save_resource = null
+	_save_load_button.disabled = false
 	show()
 
 
@@ -149,6 +154,25 @@ func _on_save_line_edit_text_submitted(new_text: String) -> void:
 func _on_save_load_button_pressed() -> void:
 	if is_save_menu:
 		_save_line_edit.text_submitted.emit(_save_line_edit.text)
+		return
+
+	if _selected_save_resource == null:
+		push_warning("Select a save before attempting to load it.")
+		return
+
+	var state: Dictionary = _selected_save_resource.get_game_state()
+	if state.is_empty():
+		push_warning("This save contains metadata only and cannot restore a game session.")
+		_label.text = tr("This save has no simulation state")
+		return
+
+	if not bool(state.get("simulation_state_complete", false)):
+		push_warning("This file is only a session checkpoint; full simulation restore is not implemented yet.")
+		_label.text = tr("Full game-state loading is not available for this checkpoint")
+		return
+
+	# Do not report a successful load until a native simulation restore routine exists.
+	push_error("The save contains a full-state marker, but no native restore routine is connected.")
 
 
 func _on_save_node_delete_requested(node: Control) -> void:
@@ -164,8 +188,14 @@ func _on_save_node_delete_requested(node: Control) -> void:
 
 
 func _on_save_node_pressed(node: Control) -> void:
+	_selected_save_resource = node.resource
 	if is_save_menu:
 		_save_line_edit.text = node.resource.save_name
+	else:
+		_save_load_button.disabled = _selected_save_resource == null
+		_label.text = tr("Selected save: {save_name}").format({
+			"save_name": _selected_save_resource.save_name,
+		})
 
 
 func _on_tag_selection_tab_bar_tab_changed(tab) -> void:
@@ -177,7 +207,11 @@ func _on_tag_selection_tab_bar_tab_changed(tab) -> void:
 
 func _on_visibility_changed() -> void:
 	if visible:
+		_selected_save_resource = null
+		if not is_save_menu:
+			_save_load_button.disabled = true
 		_build_save_list()
 	else:
+		_selected_save_resource = null
 		_queue_clear_scroll_list()
 		SaveManager.flush_save()
