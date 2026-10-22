@@ -58,7 +58,8 @@ func get_save_file_time() -> int:
 
 
 func move_to_trash() -> Error:
-	var result: Error = OS.move_to_trash(file_path)
+	var absolute_file_path: String = ProjectSettings.globalize_path(file_path)
+	var result: Error = OS.move_to_trash(absolute_file_path)
 	if result != OK:
 		push_error("Failed to move save to trash '", file_path, "': ", error_string(result))
 		return result
@@ -69,7 +70,8 @@ func move_to_trash() -> Error:
 
 
 func delete() -> Error:
-	var result: Error = DirAccess.remove_absolute(file_path)
+	var absolute_file_path: String = ProjectSettings.globalize_path(file_path)
+	var result: Error = DirAccess.remove_absolute(absolute_file_path)
 	if result != OK:
 		push_error("Failed to delete save '", file_path, "': ", error_string(result))
 		return result
