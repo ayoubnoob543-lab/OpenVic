@@ -44,11 +44,14 @@ func set_game_state(state: Dictionary) -> Error:
 		push_error("Refusing to write an empty game-state snapshot.")
 		return Error.ERR_INVALID_DATA
 
-	file.set_value(GAME_STATE_SECTION, "schema_version", SAVE_SCHEMA_VERSION)
+	# Validate the entire payload before mutating the ConfigFile.
 	for key: Variant in state:
 		if str(key).strip_edges().is_empty() or str(key) == "schema_version":
 			push_error("Invalid reserved or empty game-state key: ", key)
 			return Error.ERR_INVALID_PARAMETER
+
+	file.set_value(GAME_STATE_SECTION, "schema_version", SAVE_SCHEMA_VERSION)
+	for key: Variant in state:
 		file.set_value(GAME_STATE_SECTION, str(key), state[key])
 	emit_changed()
 	return OK
