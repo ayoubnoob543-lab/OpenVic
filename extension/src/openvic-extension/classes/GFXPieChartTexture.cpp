@@ -1,5 +1,6 @@
 #include "GFXPieChartTexture.hpp"
 
+#include <cmath>
 #include <numbers>
 
 #include "openvic-extension/core/Bind.hpp"
@@ -82,21 +83,44 @@ godot::Error GFXPieChartTexture::_generate_pie_chart_image() {
 	static const Color background_colour { 0.0f, 0.0f, 0.0f, 0.0f };
 
 	if (!slices.empty()) {
+		/* Supersample each output pixel to soften the circular edge and thin slice boundaries.
+		 * Four samples per axis are enough to reduce visible stair-stepping without changing
+		 * the texture dimensions or the coordinates used by get_slice(). */
+		static constexpr int32_t samples_per_axis = 4;
+		static constexpr float sample_count = static_cast<float>(samples_per_axis * samples_per_axis);
+
 		for (Vector2i point { 0, 0 }; point.y < pie_chart_diameter; ++point.y) {
-
 			for (point.x = 0; point.x < pie_chart_diameter; ++point.x) {
+				float red = 0.0f;
+				float green = 0.0f;
+				float blue = 0.0f;
+				float alpha = 0.0f;
 
-				Vector2 offset = point;
-				// Move to the centre of the pixel
-				offset += Vector2 { 0.5_real, 0.5_real };
-				// Normalise to [0, 2]
-				offset /= pie_chart_radius;
-				// Translate to [-1, 1]
-				offset -= Vector2 { 1.0_real, 1.0_real };
+				for (int32_t sample_y = 0; sample_y < samples_per_axis; ++sample_y) {
+					for (int32_t sample_x = 0; sample_x < samples_per_axis; ++sample_x) {
+						Vector2 offset = point;
+						// Sample evenly inside the pixel instead of testing only its centre.
+						offset += Vector2 {
+						    (static_cast<float>(sample_x) + 0.5f) / samples_per_axis,
+						    (static_cast<float>(sample_y) + 0.5f) / samples_per_axis
+						};
+						// Normalise to [0, 2], then translate to [-1, 1].
+						offset /= pie_chart_radius;
+						offset -= Vector2 { 1.0_real, 1.0_real };
 
-				slice_t const* slice = get_slice(offset);
+						slice_t const* slice = get_slice(offset);
+						Color const sample_colour = slice != nullptr ? slice->colour : background_colour;
+						red += sample_colour.r;
+						green += sample_colour.g;
+						blue += sample_colour.b;
+						alpha += sample_colour.a;
+					}
+				}
 
-				pie_chart_image->set_pixelv(point, slice != nullptr ? slice->colour : background_colour);
+				pie_chart_image->set_pixelv(
+				    point,
+				    Color { red / sample_count, green / sample_count, blue / sample_count, alpha / sample_count }
+				);
 			}
 		}
 	} else {
@@ -113,26 +137,51 @@ godot::Error GFXPieChartTexture::_generate_pie_chart_image() {
 }
 
 godot::Error GFXPieChartTexture::set_slices_array(godot_pie_chart_data_t const& new_slices) {
-	slices.clear();
-	total_weight = 0.0f;
+	/* Build the replacement first. If the caller supplies malformed data, keep the
+	 * currently displayed chart intact instead of leaving a partially updated texture. */
+	std::vector<slice_t> new_slice_list;
+	float new_total_weight = 0.0f;
+
 	for (int32_t i = 0; i < new_slices.size(); ++i) {
 		Dictionary const& slice_dict = new_slices[i];
-		ERR_CONTINUE_MSG(
+		ERR_FAIL_COND_V_MSG(
 		    !slice_dict.has(_slice_identifier_key()) || !slice_dict.has(_slice_tooltip_key()) ||
 		        !slice_dict.has(_slice_colour_key()) || !slice_dict.has(_slice_weight_key()),
+		    FAILED,
 		    Utilities::format("Invalid slice keys at index %d", i)
 		);
+
 		const slice_t slice {
 			slice_dict[_slice_identifier_key()],
 			slice_dict[_slice_tooltip_key()],
 			slice_dict[_slice_colour_key()],
 			slice_dict[_slice_weight_key()]
 		};
-		if (slice.weight > 0.0f) {
-			total_weight += slice.weight;
-			slices.push_back(slice);
+
+		ERR_FAIL_COND_V_MSG(
+		    !std::isfinite(slice.weight),
+		    FAILED,
+		    Utilities::format("Non-finite pie chart slice weight at index %d", i)
+		);
+
+		// Zero and negative weights do not contribute to the distribution.
+		if (slice.weight <= 0.0f) {
+			continue;
 		}
+
+		float const accumulated_weight = new_total_weight + slice.weight;
+		ERR_FAIL_COND_V_MSG(
+		    !std::isfinite(accumulated_weight),
+		    FAILED,
+		    Utilities::format("Pie chart total weight overflow at index %d", i)
+		);
+
+		new_total_weight = accumulated_weight;
+		new_slice_list.push_back(slice);
 	}
+
+	slices = std::move(new_slice_list);
+	total_weight = new_total_weight;
 	return _generate_pie_chart_image();
 }
 
