@@ -99,6 +99,15 @@ func _on_back_button_pressed() -> void:
 	print("Returning to Main Menu.")
 	SaveManager.current_session_tag = ""
 	SaveManager.current_save = null
+
+	# Country selection may have initialised a game instance before Start was pressed.
+	# Tear it down here so a later lobby can load a different bookmark.
+	if GameSingleton.is_game_instance_setup() and not GameSingleton.is_game_session_active():
+		if GameSingleton.end_game_session() != OK:
+			push_warning("Failed to clean up the unstarted game instance.")
+
+	_game_setup_date_index = -1
+	_start_date_index = -1
 	back_button_pressed.emit()
 
 
