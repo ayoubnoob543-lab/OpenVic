@@ -14,8 +14,11 @@ const GENERAL_BASE_DEFINES_PATH := &"victoria_2/base_defines_path"
 const REQUIRED_BASE_FILES: PackedStringArray = [
 	"map/provinces.bmp",
 	"map/definition.csv",
-	"common/countries.txt",
 	"common/goods.txt",
+]
+const REQUIRED_BASE_DIRECTORIES: PackedStringArray = [
+	"common/countries",
+	"history/countries",
 ]
 
 var _base_path_find_dialog := FileDialog.new()
@@ -110,8 +113,9 @@ func get_base_path_validation_error(path: String) -> String:
 	for relative_path: String in REQUIRED_BASE_FILES:
 		if not FileAccess.file_exists(path.path_join(relative_path)):
 			missing_paths.append(relative_path)
-	if not DirAccess.dir_exists_absolute(path.path_join("history/countries")):
-		missing_paths.append("history/countries/")
+	for relative_path: String in REQUIRED_BASE_DIRECTORIES:
+		if not DirAccess.dir_exists_absolute(path.path_join(relative_path)):
+			missing_paths.append(relative_path + "/")
 
 	if missing_paths.is_empty():
 		return ""
