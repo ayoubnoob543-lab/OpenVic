@@ -215,28 +215,12 @@ godot::Error GameSingleton::setup_game(int32_t bookmark_index) {
 	ERR_FAIL_NULL_V_MSG(bookmark, FAILED, Utilities::format("Failed to get bookmark with index: %d", bookmark_index));
 	bool ret = game_manager.setup_instance(*bookmark);
 
-	// TODO - remove this temporary crime assignment
-	InstanceManager* instance_manager = get_instance_manager();
-	ERR_FAIL_NULL_V_MSG(instance_manager, FAILED, "Failed to setup instance manager!");
-
-	CrimeManager const& crime_manager = definition_manager.get_crime_manager();
-	for (ProvinceInstance& province : instance_manager->get_map_instance().get_province_instances()) {
-		const crime_index_t crime_index = crime_index_t(
-		    type_safe::get(province.index) % crime_manager.get_crime_modifier_count()
-		);
-		province.set_crime(crime_manager.get_crime_modifier_by_index(crime_index));
-	}
 
 	ret &= MenuSingleton::get_singleton()->_population_menu_update_provinces() == OK;
 
-	// TODO - replace with actual starting country
-	CountryInstance* starting_country = instance_manager->get_country_instance_manager().get_country_instance_by_identifier(
-	    "ENG"
-	);
-
-	PlayerSingleton& player_singleton = *PlayerSingleton::get_singleton();
-	player_singleton.set_player_country(starting_country);
-	ERR_FAIL_NULL_V(player_singleton.get_player_country(), FAILED);
+	// The lobby chooses the player country after the user selects an owned province.
+	// Reset stale pointers before a fresh game instance is exposed to the UI.
+	PlayerSingleton::get_singleton()->reset_player_singleton();
 
 	// Research should come from country history / player actions, not a hard-coded test technology.
 
