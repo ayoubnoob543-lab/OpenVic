@@ -92,3 +92,7 @@ func flush_save() -> Error:
 
 func _on_save_deleted_or_moved(save: SaveResource) -> void:
 	_save_dictionary.erase(get_save_file_name(save.save_name, save.session_tag))
+	if _dirty_save == save:
+		_dirty_save = null
+	if current_save == save:
+		current_save = null
