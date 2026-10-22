@@ -93,6 +93,12 @@ func _ready() -> void:
 		push_error("MapView's _camera variable hasn't been set!")
 		return
 
+	# The lobby may centre the camera as soon as this node emits ready.
+	# Ensure look_at_map_position() has real dimensions rather than its 1x1 fallback.
+	_viewport_dims = Vector2(GameSettings.get_game_resolution())
+	if _viewport_dims.x <= 0.0 or _viewport_dims.y <= 0.0:
+		_viewport_dims = Vector2(get_viewport().get_visible_rect().size)
+
 	if not _map_mesh_instance:
 		push_error("MapView's _map_mesh_instance variable hasn't been set!")
 		return
