@@ -15,7 +15,13 @@ func _ready() -> void:
 	var saves_dir_path: String = ProjectSettings.get_setting_with_override(save_directory_setting)
 	assert(saves_dir_path != null, "'%s' setting could not be found." % save_directory_setting)
 
-	DirAccess.make_dir_recursive_absolute(saves_dir_path)
+	var absolute_saves_dir_path: String = ProjectSettings.globalize_path(saves_dir_path)
+	if not DirAccess.dir_exists_absolute(absolute_saves_dir_path):
+		var create_error: Error = DirAccess.make_dir_recursive_absolute(absolute_saves_dir_path)
+		if create_error != OK:
+			push_error("Unable to create save directory '", absolute_saves_dir_path, "': ", error_string(create_error))
+			return
+
 	var saves_dir := DirAccess.open(saves_dir_path)
 	if saves_dir == null:
 		push_error("Unable to open save directory: ", saves_dir_path)
