@@ -274,6 +274,7 @@ func _on_map_view_province_clicked(province_number: int) -> void:
 		if selected_country_name_label != null:
 			selected_country_name_label.text = tr("Select an owned province")
 		return
+	PlayerSingleton.set_selected_province_by_number(province_number)
 	var country_identifier: String = PlayerSingleton.get_player_country_identifier()
 	if country_identifier.is_empty():
 		push_warning("The clicked province has no selectable country.")
