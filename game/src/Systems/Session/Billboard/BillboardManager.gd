@@ -70,6 +70,13 @@ var province_billboards_visible: bool = true
 
 
 func _ready() -> void:
+	if multimesh == null:
+		push_error("BillboardManager requires a MultiMesh resource")
+		return
+	if multimesh.mesh == null or multimesh.mesh.get_surface_count() == 0:
+		push_error("BillboardManager requires a mesh with at least one surface")
+		return
+
 	const name_key: StringName = &"name"
 	const texture_key: StringName = &"texture"
 	const scale_key: StringName = &"scale"
