@@ -11,7 +11,8 @@ func _ready() -> void:
 	if GameSingleton.start_game_session() != OK:
 		push_error("Failed to start game session")
 		set_process(false)
-		set_process_unhandled_input(false)
+		if _map_view != null:
+			_map_view.disable_processing()
 		return
 
 	_session_started = true
