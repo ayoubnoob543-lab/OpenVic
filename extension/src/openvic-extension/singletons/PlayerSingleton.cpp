@@ -26,6 +26,7 @@ void PlayerSingleton::_bind_methods() {
 
 	// Player country
 	OV_BIND_METHOD(PlayerSingleton::set_player_country_by_province_number, { "province_number" });
+	OV_BIND_METHOD(PlayerSingleton::get_player_country_identifier);
 	OV_BIND_METHOD(PlayerSingleton::get_player_country_capital_position);
 
 	// Selected province
@@ -121,7 +122,17 @@ void PlayerSingleton::set_player_country_by_province_number(int32_t province_num
 	);
 	ERR_FAIL_NULL(province_instance);
 
-	set_player_country(province_instance->get_owner());
+	CountryInstance* const owner = province_instance->get_owner();
+	if (owner == nullptr) {
+		SPDLOG_INFO("Ignoring country selection on unowned province {}", province_number);
+		return;
+	}
+
+	set_player_country(owner);
+}
+
+String PlayerSingleton::get_player_country_identifier() const {
+	return player_country != nullptr ? convert_to<String>(player_country->get_identifier()) : String {};
 }
 
 Vector2 PlayerSingleton::get_player_country_capital_position() const {
