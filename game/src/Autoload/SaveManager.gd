@@ -28,6 +28,9 @@ func _ready() -> void:
 		return
 
 	for file_name: String in saves_dir.get_files():
+		# Atomic-save working files are recovery artifacts, never user-visible saves.
+		if file_name.ends_with(".tmp") or file_name.ends_with(".bak"):
+			continue
 		var save := SaveResource.new()
 		var save_path: String = saves_dir_path.path_join(file_name)
 		var load_error: Error = save.load_save(save_path)
