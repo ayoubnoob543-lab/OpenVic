@@ -72,19 +72,23 @@ func _setup_compatibility_mode_paths() -> void:
 	load_list_setting.set_value(load_list)
 
 
-func _load_compatibility_mode() -> void:
+func _load_compatibility_mode() -> Error:
 	if GameSingleton.set_compatibility_mode_roots(Vic2Settings.get_base_defines_path()) != OK:
 		push_error("Errors setting game roots!")
+		return FAILED
 
 	CursorManager.initial_cursor_setup()
 	setup_title_theme()
 
-	if GameSingleton.load_defines_compatibility_mode(ModSettings.get_load_list()) != OK:
+	var load_error: Error = GameSingleton.load_defines_compatibility_mode(ModSettings.get_load_list())
+	if load_error != OK:
 		push_error("Errors loading game defines!")
+		return load_error
 
 	SoundSingleton.load_sounds()
 	SoundSingleton.load_music()
 	MusicManager.add_compat_songs()
+	return OK
 
 
 func setup_title_theme() -> void:
@@ -115,7 +119,9 @@ func _initialize_game() -> void:
 
 	loading_screen.try_update_loading_screen(15, true)
 
-	_load_compatibility_mode()
+	if _load_compatibility_mode() != OK:
+		call_deferred("_show_initialization_error")
+		return
 	loading_screen.try_update_loading_screen(75, true)
 
 	loading_screen.try_update_loading_screen(100)
@@ -125,6 +131,14 @@ func _initialize_game() -> void:
 
 	# change scene in a thread-safe way
 	get_tree().change_scene_to_packed.call_deferred(GameMenuScene)
+
+
+func _show_initialization_error() -> void:
+	loading_screen.progress_bar.value = 100
+	loading_screen.quote_label.text = tr(
+		"Failed to load Victoria II data. Check the game directory and application logs, then restart OpenVic."
+	)
+	loading_screen.animation_player.stop()
 
 
 func _on_splash_container_splash_end() -> void:
