@@ -24,6 +24,10 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_player_country_identifier" qualifiers="const">
+			<return type="String" />
+			<description>Returns the identifier of the currently selected player country, or an empty string when no country is selected.</description>
+		</method>
 		<method name="get_player_country_capital_position" qualifiers="const">
 			<return type="Vector2" />
 			<description>
