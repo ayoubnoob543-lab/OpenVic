@@ -19,6 +19,13 @@ References:
 - https://github.com/OpenVicProject/OpenVic-Simulation/blob/master/docs/ecs/world.md
 - https://github.com/OpenVicProject/OpenVic-Simulation/blob/master/docs/ecs/determinism.md
 
+## Work completed in the parent repository
+
+- Save files are written through a sibling `.tmp` file and a `.bak` rollback copy.
+- Startup now checks for interrupted replacements before listing saves. It restores a readable backup or temporary file if the final save is missing or corrupt, and preserves a corrupt target for diagnosis instead of overwriting it.
+- Added GDScript tests for backup restoration, temporary-file recovery, and corrupt-target preservation. These tests have been committed but **have not been executed in a Godot/GdUnit runtime here**.
+- This improves disk-level recovery only. It does not serialize or restore the native simulation and must not be treated as completion of full save/load.
+
 ## Required implementation
 
 1. Add a versioned native save format and a save/load API on the simulation manager.
