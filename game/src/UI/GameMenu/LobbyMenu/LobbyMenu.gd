@@ -27,8 +27,14 @@ var _start_date_index: int = -1
 
 
 func _ready() -> void:
-	# TODO: Needs to be able to set the map to the political mapmode
-	pass
+	for mapmode_index: int in GameSingleton.get_mapmode_count():
+		var identifier: String = GameSingleton.get_mapmode_identifier(mapmode_index).to_lower()
+		var localisation_key: String = GameSingleton.get_mapmode_localisation_key(mapmode_index).to_lower()
+		if identifier in ["political", "mapmode_political"] or localisation_key == "mapmode_political":
+			if GameSingleton.set_mapmode(mapmode_index) != OK:
+				push_warning("Failed to set the political mapmode in the game lobby")
+			return
+	push_warning("Political mapmode is unavailable; keeping the current mapmode in the lobby")
 
 
 func filter_for_tag(tag: StringName) -> void:
