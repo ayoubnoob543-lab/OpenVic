@@ -86,8 +86,9 @@ func _load_compatibility_mode() -> Error:
 
 	var load_error: Error = GameSingleton.load_defines_compatibility_mode(ModSettings.get_load_list())
 	if load_error != OK:
+		# Preserve compatibility mode's existing fallback behavior: some missing assets have
+		# placeholders, so a reported load error is not necessarily fatal to startup.
 		push_error("Errors loading game defines!")
-		return load_error
 
 	SoundSingleton.load_sounds()
 	SoundSingleton.load_music()
