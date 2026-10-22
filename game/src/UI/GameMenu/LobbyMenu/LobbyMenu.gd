@@ -59,7 +59,9 @@ func _build_date_list() -> void:
 
 
 func _build_save_list() -> void:
-	game_select_save_tab.add_tab("All")
+	# The scene starts with an "All" tab; only recreate it after the list was cleared.
+	if game_select_save_tab.tab_count == 0:
+		game_select_save_tab.add_tab("All")
 	for save_name: StringName in SaveManager._save_dictionary:
 		var save: SaveResource = SaveManager._save_dictionary[save_name]
 		var save_node := _create_save_node(save)
