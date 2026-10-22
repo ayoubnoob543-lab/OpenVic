@@ -17,9 +17,20 @@ func _ready() -> void:
 
 	DirAccess.make_dir_recursive_absolute(saves_dir_path)
 	var saves_dir := DirAccess.open(saves_dir_path)
-	for file: String in saves_dir.get_files():
+	if saves_dir == null:
+		push_error("Unable to open save directory: ", saves_dir_path)
+		return
+
+	for file_name: String in saves_dir.get_files():
 		var save := SaveResource.new()
-		save.load_save(saves_dir_path.path_join(file))
+		var save_path: String = saves_dir_path.path_join(file_name)
+		var load_error: Error = save.load_save(save_path)
+		if load_error != OK:
+			push_warning("Skipping unreadable save file '", save_path, "': ", error_string(load_error))
+			continue
+		if save.save_name.is_empty():
+			push_warning("Skipping save file without a save name: ", save_path)
+			continue
 		add_or_replace_save(save, true)
 
 
@@ -62,10 +73,15 @@ func delete_save(save: SaveResource) -> void:
 	save.delete()
 
 
-func flush_save() -> void:
-	if _dirty_save == null: return
-	_dirty_save.flush_save()
-	_dirty_save = null
+func flush_save() -> Error:
+	if _dirty_save == null:
+		return OK
+
+	var save_to_flush: SaveResource = _dirty_save
+	var result: Error = save_to_flush.flush_save()
+	if result == OK and _dirty_save == save_to_flush:
+		_dirty_save = null
+	return result
 
 
 func _on_save_deleted_or_moved(save: SaveResource) -> void:
