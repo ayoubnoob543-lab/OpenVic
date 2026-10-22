@@ -53,7 +53,7 @@ func _on_map_view_ready() -> void:
 			start_position = GameSingleton.get_bookmark_start_position()
 		else:
 			start_position = Vector2(0.5, 0.5)
-	_map_view._camera.position = _map_view._map_to_world_coords(start_position)
+	_map_view.look_at_map_position(start_position)
 
 
 func _on_map_view_province_hovered(province_number: int) -> void:
