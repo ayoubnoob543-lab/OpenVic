@@ -111,6 +111,8 @@ func _on_overwrite_dialog_confirmed() -> void:
 		# economy, POPs, armies, diplomacy and RNG state need native serializers.
 		var checkpoint: Dictionary = {
 			"snapshot_kind": "session_reference",
+			"simulation_state_complete": false,
+			"current_date": GameSingleton.get_current_date_string(),
 			"player_country": PlayerSingleton.get_player_country_identifier(),
 			"selected_province": PlayerSingleton.get_selected_province_number(),
 			"mapmode_index": GameSingleton.get_current_mapmode_index(),
