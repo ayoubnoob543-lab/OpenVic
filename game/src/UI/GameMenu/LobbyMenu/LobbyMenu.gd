@@ -197,8 +197,15 @@ func _on_game_select_save_tab_tab_changed(tab: int) -> void:
 
 
 func _on_delete_dialog_confirmed() -> void:
-	_requested_node_to_delete.resource.delete()
+	if _requested_node_to_delete == null:
+		return
+
+	var delete_error: Error = _requested_node_to_delete.resource.delete()
+	if delete_error != OK:
+		return
+
 	_requested_node_to_delete.queue_free()
+	_requested_node_to_delete = null
 
 
 func _on_visibility_changed() -> void:
