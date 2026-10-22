@@ -200,6 +200,11 @@ func _on_save_node_delete_requested(node: Control) -> void:
 
 
 func _on_start_date_panel_button_pressed(node: Control, requested_date_index: int) -> void:
+	if requested_date_index < 0 or requested_date_index >= GameSingleton.get_bookmark_info().size():
+		push_warning("Ignoring a bookmark selection with an invalid index: ", requested_date_index)
+		return
+	if not is_instance_valid(node) or node.get_parent() != game_select_start_date:
+		return
 	if requested_date_index == _start_date_index:
 		_on_start_button_pressed()
 		return
