@@ -334,10 +334,8 @@ func _unhandled_input(event: InputEvent) -> void:
 						_map_to_world_coords(unit_position),
 						randi_range(0, 1),
 					)
-				# TODO - open diplomacy screen on province owner or viewed country if province has
-				# no owner
-				#Events.NationManagementScreens.open_nation_management_screen(NationManagement.Screen.DIPLOMACY)
-				PlayerSingleton.set_player_country_by_province_number(province_number)
+				# Right-click is a context action, not a player-country switch.
+				# TODO - open diplomacy or army movement actions for this province.
 			else:
 				print("Right-clicked outside the map!")
 	elif event.is_action_pressed(_action_drag):
