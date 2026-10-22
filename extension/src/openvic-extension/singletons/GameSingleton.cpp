@@ -238,14 +238,7 @@ godot::Error GameSingleton::setup_game(int32_t bookmark_index) {
 	player_singleton.set_player_country(starting_country);
 	ERR_FAIL_NULL_V(player_singleton.get_player_country(), FAILED);
 
-	// TODO - remove this test starting research
-	for (Technology const& technology :
-	     get_definition_manager().get_research_manager().get_technology_manager().get_technologies()) {
-		if (starting_country->can_research_tech(technology, instance_manager->get_today())) {
-			starting_country->start_research(technology, instance_manager->get_today());
-			break;
-		}
-	}
+	// Research should come from country history / player actions, not a hard-coded test technology.
 
 	return ERR(ret);
 }
