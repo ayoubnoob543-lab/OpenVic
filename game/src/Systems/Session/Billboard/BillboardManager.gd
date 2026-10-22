@@ -146,6 +146,16 @@ func _ready() -> void:
 func set_capitals() -> void:
 	var capital_positions: PackedVector2Array = MapItemSingleton.get_capital_positions()
 	var capitals_size: int = capital_positions.size()
+	if capitals_size > total_capitals_size:
+		push_warning(
+			"Capital position data exceeds allocated billboard capacity: expected at most ",
+			total_capitals_size,
+			" entries, received ",
+			capitals_size,
+			". Extra capitals will be hidden."
+		)
+		capitals_size = total_capitals_size
+
 	if not billboard_type_to_index.has(BillboardType.CAPITAL):
 		for capital_index: int in total_capitals_size:
 			multimesh.set_instance_custom_data(capital_index, Color(0.0, 0.0, 0.0, 0.0))
