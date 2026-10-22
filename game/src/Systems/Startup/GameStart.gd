@@ -42,8 +42,12 @@ func _setup_compatibility_mode_paths() -> void:
 				"\nSearch: ",
 				arg_search_path,
 			)
-		setting.set_value(arg_base_path.simplify_path())
-		var path_error := Vic2Settings.get_base_path_validation_error(arg_base_path.simplify_path())
+		var normalized_base_path: String = arg_base_path
+		if normalized_base_path.is_relative_path():
+			normalized_base_path = DirAccess.get_current_dir().path_join(normalized_base_path)
+		normalized_base_path = normalized_base_path.simplify_path()
+		setting.set_value(normalized_base_path)
+		var path_error := Vic2Settings.get_base_path_validation_error(normalized_base_path)
 		if not path_error.is_empty():
 			push_warning("Ignoring invalid --base-path '", arg_base_path, "': ", path_error)
 	elif Vic2Settings.get_base_defines_path().is_empty() and arg_search_path:
