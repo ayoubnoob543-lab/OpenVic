@@ -140,7 +140,7 @@ func test_recovery_preserves_corrupt_target_and_restores_valid_backup() -> void:
 		"user://save-corrupt-recovery-test-%s.cfg" % Time.get_ticks_usec()
 	)
 	var corrupt_file: FileAccess = FileAccess.open(save_path, FileAccess.WRITE)
-	assert_object(corrupt_file).is_not_null()
+	assert_bool(corrupt_file != null).is_true()
 	corrupt_file.store_string("this is not a valid ConfigFile [")
 	corrupt_file.close()
 
@@ -178,3 +178,19 @@ func test_recovery_promotes_valid_temporary_file_when_target_and_backup_are_miss
 	assert_str(str(recovered.get_value("Save", "name", ""))).is_equal("temporary-save")
 
 	DirAccess.remove_absolute(save_path)
+
+
+
+func test_recovery_rejects_parseable_config_without_save_metadata() -> void:
+	var save_path: String = ProjectSettings.globalize_path(
+		"user://save-invalid-recovery-test-%s.cfg" % Time.get_ticks_usec()
+	)
+	var invalid_temporary: ConfigFile = ConfigFile.new()
+	invalid_temporary.set_value("NotASave", "value", 1)
+	assert_int(invalid_temporary.save(save_path + ".tmp")).is_equal(OK)
+
+	assert_int(SaveResource.recover_interrupted_save(save_path)).is_equal(ERR_FILE_NOT_FOUND)
+	assert_bool(FileAccess.file_exists(save_path)).is_false()
+	assert_bool(FileAccess.file_exists(save_path + ".tmp")).is_true()
+
+	DirAccess.remove_absolute(save_path + ".tmp")
