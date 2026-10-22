@@ -31,8 +31,6 @@ var _game_setup_date_index: int = -1
 func _ready() -> void:
 	if selected_country_name_label != null:
 		selected_country_name_label.text = tr("Select a country on the map")
-	if map_view != null:
-		map_view.disable_processing() if not GameSingleton.is_game_instance_setup() else map_view.enable_processing()
 
 
 func filter_for_tag(tag: StringName) -> void:
@@ -252,7 +250,10 @@ func _on_map_view_province_clicked(province_number: int) -> void:
 			return
 		_game_setup_date_index = _start_date_index
 
-	PlayerSingleton.set_player_country_by_province_number(province_number)
+	if not PlayerSingleton.set_player_country_by_province_number(province_number):
+		if selected_country_name_label != null:
+			selected_country_name_label.text = tr("Select an owned province")
+		return
 	var country_identifier: String = PlayerSingleton.get_player_country_identifier()
 	if country_identifier.is_empty():
 		push_warning("The clicked province has no selectable country.")
