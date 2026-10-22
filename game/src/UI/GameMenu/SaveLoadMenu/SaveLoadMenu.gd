@@ -106,6 +106,21 @@ func _on_delete_dialog_confirmed() -> void:
 
 func _on_overwrite_dialog_confirmed() -> void:
 	var new_save: SaveResource = SaveManager.make_new_save(_submitted_text)
+	if GameSingleton.is_game_session_active():
+		# This is a versioned session checkpoint, not yet a full simulation dump:
+		# economy, POPs, armies, diplomacy and RNG state need native serializers.
+		var checkpoint: Dictionary = {
+			"snapshot_kind": "session_reference",
+			"player_country": PlayerSingleton.get_player_country_identifier(),
+			"selected_province": PlayerSingleton.get_selected_province_number(),
+			"mapmode_index": GameSingleton.get_current_mapmode_index(),
+			"bookmark_start_position": GameSingleton.get_bookmark_start_position(),
+			"saved_at_unix": Time.get_unix_time_from_system(),
+		}
+		var snapshot_error: Error = new_save.set_game_state(checkpoint)
+		if snapshot_error != OK:
+			push_error("Could not prepare game-state checkpoint.")
+			return
 	SaveManager.add_or_replace_save(new_save)
 	var flush_error: Error = SaveManager.flush_save()
 	if flush_error != OK:
