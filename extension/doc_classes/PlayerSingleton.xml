@@ -91,8 +91,7 @@
 		<method name="set_player_country_by_province_number">
 			<return type="bool" />
 			<param index="0" name="province_number" type="int" />
-			<description>
-			</description>
+			<description>Sets the player country to the owner of the province and returns whether a country was selected. Returns false for invalid or unowned provinces.</description>
 		</method>
 		<method name="set_selected_province_by_number">
 			<return type="void" />
