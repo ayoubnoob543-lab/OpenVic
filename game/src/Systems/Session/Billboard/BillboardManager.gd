@@ -103,9 +103,24 @@ func _ready() -> void:
 		if billboard_type == BillboardType.NONE:
 			continue
 
+		if (
+				typeof(billboard[scale_key]) not in [TYPE_INT, TYPE_FLOAT]
+				or typeof(billboard[no_of_frames_key]) != TYPE_INT
+		):
+			push_warning("Skipping billboard with invalid scale/frame types: ", billboard_name)
+			continue
+
 		var texture_name: StringName = billboard[texture_key]
-		var billboard_scale: float = billboard[scale_key]
-		var no_of_frames: int = billboard[no_of_frames_key]
+		var billboard_scale: float = float(billboard[scale_key])
+		var no_of_frames: int = int(billboard[no_of_frames_key])
+		if not is_finite(billboard_scale) or billboard_scale <= 0.0:
+			push_warning("Skipping billboard with non-positive or non-finite scale: ", billboard_name)
+			continue
+		# Frames are stored in a PackedByteArray for the shader, so reject values
+		# that cannot be represented rather than allowing a wrapped frame count.
+		if no_of_frames < 1 or no_of_frames > 255:
+			push_warning("Skipping billboard with an invalid frame count: ", billboard_name, " (", no_of_frames, ")")
+			continue
 
 		var texture: ImageTexture = AssetManager.get_texture(texture_name)
 		if texture == null:
