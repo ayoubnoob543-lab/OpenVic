@@ -113,7 +113,7 @@ func _ready() -> void:
 		var texture_name: StringName = billboard[texture_key]
 		var billboard_scale: float = float(billboard[scale_key])
 		var no_of_frames: int = int(billboard[no_of_frames_key])
-		if not is_finite(billboard_scale) or billboard_scale <= 0.0:
+		if is_nan(billboard_scale) or is_inf(billboard_scale) or billboard_scale <= 0.0:
 			push_warning("Skipping billboard with non-positive or non-finite scale: ", billboard_name)
 			continue
 		# Frames are stored in a PackedByteArray for the shader, so reject values
