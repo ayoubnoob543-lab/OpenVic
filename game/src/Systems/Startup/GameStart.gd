@@ -115,6 +115,7 @@ func setup_title_theme() -> void:
 
 func _initialize_game() -> void:
 	if Vic2Settings.get_base_defines_path().is_empty():
+		call_deferred("_show_initialization_error")
 		return
 
 	var start := Time.get_ticks_usec()
