@@ -34,10 +34,14 @@ func set_file_path(name: StringName, path: String) -> void:
 
 
 func flush_save() -> Error:
+	var result: Error = file.save(file_path)
+	if result != OK:
+		push_error("Failed to save game to '", file_path, "': ", error_string(result))
+		return result
+
 	file_flushed.emit(file_path)
-	var result := file.save(file_path)
 	file.clear()
-	return result
+	return OK
 
 
 func load_save(path: String = file_path) -> Error:
