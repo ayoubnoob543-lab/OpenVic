@@ -83,6 +83,10 @@ func _ready() -> void:
 	const no_of_frames_key: StringName = &"noFrames"
 
 	for billboard: Dictionary in MapItemSingleton.get_billboards():
+		if not billboard.has(name_key) or not billboard.has(texture_key) or not billboard.has(scale_key) or not billboard.has(no_of_frames_key):
+			push_warning("Skipping malformed billboard definition with missing required fields: ", billboard)
+			continue
+
 		var billboard_name: StringName = billboard[name_key]
 
 		var billboard_type: BillboardType = BillboardType.NONE
