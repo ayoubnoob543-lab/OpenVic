@@ -93,10 +93,20 @@ func get_base_defines_path() -> String:
 
 func find_base_path(search_path: String) -> String:
 	var result := GameSingleton.search_for_game_path(search_path)
-	if result.is_empty() or not _is_valid_victoria_2_directory(result):
+	if result.is_empty():
 		push_warning("Failed to find a valid Victoria II installation using ", search_path)
 		return ""
-	return result.simplify_path()
+
+	# The dataloader can return the supplied hint unchanged, including a relative path
+	# when OpenVic is launched from inside the Victoria II installation directory.
+	if result.is_relative_path():
+		result = DirAccess.get_current_dir().path_join(result)
+	result = result.simplify_path()
+
+	if not _is_valid_victoria_2_directory(result):
+		push_warning("Failed to find a valid Victoria II installation using ", search_path)
+		return ""
+	return result
 
 
 func get_base_path_validation_error(path: String) -> String:
