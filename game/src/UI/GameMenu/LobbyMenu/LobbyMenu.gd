@@ -49,12 +49,14 @@ func _build_date_list() -> void:
 	const bookmark_info_name_key: StringName = &"bookmark_name"
 	const bookmark_info_date_key: StringName = &"bookmark_date"
 
+	var bookmark_index: int = 0
 	for bookmark_dict: Dictionary in GameSingleton.get_bookmark_info():
 		var start_date := lobby_panel_button.instantiate()
 		start_date.set_name_text(bookmark_dict.get(bookmark_info_name_key, "MISSING BOOKMARK NAME"))
 		start_date.set_date_text(bookmark_dict.get(bookmark_info_date_key, "MISSING BOOKMARK DATE"))
-		start_date.pressed.connect(_on_start_date_panel_button_pressed.bind(start_date))
+		start_date.pressed.connect(_on_start_date_panel_button_pressed.bind(start_date, bookmark_index))
 		game_select_start_date.add_child(start_date)
+		bookmark_index += 1
 
 
 # Requirements
@@ -86,6 +88,8 @@ func _queue_clear_lists() -> void:
 	var full_list := game_select_start_date.get_children()
 	full_list.append_array(game_select_save_list.get_children())
 	for child: Node in full_list:
+		if child.get_parent() != null:
+			child.get_parent().remove_child(child)
 		child.queue_free()
 	game_select_save_tab.clear_tabs()
 	_id_to_tag.clear()
@@ -195,8 +199,7 @@ func _on_save_node_delete_requested(node: Control) -> void:
 	delete_dialog.popup_centered()
 
 
-func _on_start_date_panel_button_pressed(node: Control) -> void:
-	var requested_date_index: int = node.get_index(true)
+func _on_start_date_panel_button_pressed(node: Control, requested_date_index: int) -> void:
 	if requested_date_index == _start_date_index:
 		_on_start_button_pressed()
 		return
@@ -271,6 +274,9 @@ func _on_map_view_province_clicked(province_number: int) -> void:
 		_game_setup_date_index = _start_date_index
 
 	if not PlayerSingleton.set_player_country_by_province_number(province_number):
+		# Do not leave the previous country silently startable after an invalid click.
+		_selected_country_identifier = ""
+		start_button.disabled = true
 		if selected_country_name_label != null:
 			selected_country_name_label.text = tr("Select an owned province")
 		return
