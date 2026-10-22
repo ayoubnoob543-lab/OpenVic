@@ -197,11 +197,22 @@ func update_province_billboards() -> void:
 				push_error("Invalid province billboard type: ", current_province_billboard)
 				return
 
-		# Capitals are first in the array, so start iterating after them
+		# Capitals are first in the array, so start iterating after them.
+		# Guard incomplete data so a bad map definition cannot index past the array.
+		if icons.size() < provinces_size:
+			push_warning(
+				"Province billboard icon data is incomplete: expected ",
+				provinces_size,
+				" entries, received ",
+				icons.size(),
+				". Missing icons will be hidden."
+			)
+
 		for province_index: int in provinces_size:
+			var frame: float = float(icons[province_index]) if province_index < icons.size() else 0.0
 			multimesh.set_instance_custom_data(
 				province_index + total_capitals_size,
-				Color(image_index, icons[province_index], 0.0, 0.0)
+				Color(image_index, frame, 0.0, 0.0)
 			)
 
 		multimesh.visible_instance_count = total_capitals_size + provinces_size
