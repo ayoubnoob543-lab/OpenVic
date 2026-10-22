@@ -108,6 +108,9 @@ func _on_back_button_pressed() -> void:
 
 	_game_setup_date_index = -1
 	_start_date_index = -1
+	start_button.disabled = true
+	if selected_country_name_label != null:
+		selected_country_name_label.text = tr("Select a country on the map")
 	back_button_pressed.emit()
 
 
