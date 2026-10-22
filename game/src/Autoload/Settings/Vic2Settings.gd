@@ -100,7 +100,9 @@ func _is_valid_victoria_2_directory(path: String) -> bool:
 	# installation from an arbitrary directory or an incomplete Steam library.
 	return (
 		FileAccess.file_exists(path.path_join("map/provinces.bmp"))
+		and FileAccess.file_exists(path.path_join("map/definition.csv"))
 		and FileAccess.file_exists(path.path_join("common/countries.txt"))
+		and FileAccess.file_exists(path.path_join("common/goods.txt"))
 		and DirAccess.dir_exists_absolute(path.path_join("history/countries"))
 	)
 
