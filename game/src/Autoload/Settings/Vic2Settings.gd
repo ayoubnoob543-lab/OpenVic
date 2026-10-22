@@ -141,7 +141,7 @@ func show_base_path_find_dialog() -> void:
 
 
 func _base_defines_path_validate(_stg: Setting, val: Variant) -> bool:
-	if not val is String:
+	if typeof(val) != TYPE_STRING:
 		return false
 	return _is_valid_victoria_2_directory(val)
 
